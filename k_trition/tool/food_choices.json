@@ -1,0 +1,302 @@
+[
+  {
+    "fdc_id": 173061,
+    "name": "Sirloin steak (grilled)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 171477,
+    "name": "Chicken breast (roasted)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 171496,
+    "name": "Turkey breast (roasted)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 172161,
+    "name": "Ground beef (cooked)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 175168,
+    "name": "Salmon (cooked)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 334194,
+    "name": "Tuna (canned in water)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 173424,
+    "name": "Egg (hard-boiled)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 172187,
+    "name": "Egg (scrambled)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 172475,
+    "name": "Tofu (firm)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 173735,
+    "name": "Black beans (cooked)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 173757,
+    "name": "Chickpeas (cooked)",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 174289,
+    "name": "Hummus",
+    "category": "Protein"
+  },
+  {
+    "fdc_id": 168878,
+    "name": "White rice (cooked)",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 169704,
+    "name": "Brown rice (cooked)",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 169737,
+    "name": "Pasta (cooked)",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 173905,
+    "name": "Oatmeal (cooked)",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 172688,
+    "name": "Whole-wheat bread",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 174899,
+    "name": "Plain bagel",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 167535,
+    "name": "Flour tortilla",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 170093,
+    "name": "Potato (baked)",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 168483,
+    "name": "Sweet potato (baked)",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 170698,
+    "name": "French fries",
+    "category": "Grains & starches"
+  },
+  {
+    "fdc_id": 171688,
+    "name": "Apple",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 173944,
+    "name": "Banana",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 169097,
+    "name": "Orange",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 174683,
+    "name": "Grapes",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 167762,
+    "name": "Strawberries",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 171711,
+    "name": "Blueberries",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 171705,
+    "name": "Avocado",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 169124,
+    "name": "Pineapple",
+    "category": "Fruit"
+  },
+  {
+    "fdc_id": 169967,
+    "name": "Broccoli (cooked)",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 170394,
+    "name": "Carrots (cooked)",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 168409,
+    "name": "Cucumber",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 170457,
+    "name": "Tomato",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 169247,
+    "name": "Romaine lettuce",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 170000,
+    "name": "Onion",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 170108,
+    "name": "Bell pepper",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 168462,
+    "name": "Spinach (raw)",
+    "category": "Vegetables"
+  },
+  {
+    "fdc_id": 171267,
+    "name": "Milk (2%)",
+    "category": "Dairy & alternatives"
+  },
+  {
+    "fdc_id": 330137,
+    "name": "Greek yogurt (plain, nonfat)",
+    "category": "Dairy & alternatives"
+  },
+  {
+    "fdc_id": 170886,
+    "name": "Yogurt (plain, low-fat)",
+    "category": "Dairy & alternatives"
+  },
+  {
+    "fdc_id": 328637,
+    "name": "Cheddar cheese",
+    "category": "Dairy & alternatives"
+  },
+  {
+    "fdc_id": 170845,
+    "name": "Mozzarella cheese",
+    "category": "Dairy & alternatives"
+  },
+  {
+    "fdc_id": 174832,
+    "name": "Almond milk (unsweetened)",
+    "category": "Dairy & alternatives"
+  },
+  {
+    "fdc_id": 172470,
+    "name": "Peanut butter",
+    "category": "Spreads, nuts & oils"
+  },
+  {
+    "fdc_id": 170567,
+    "name": "Almonds",
+    "category": "Spreads, nuts & oils"
+  },
+  {
+    "fdc_id": 171413,
+    "name": "Olive oil",
+    "category": "Spreads, nuts & oils"
+  },
+  {
+    "fdc_id": 173410,
+    "name": "Butter",
+    "category": "Spreads, nuts & oils"
+  },
+  {
+    "fdc_id": 173592,
+    "name": "Ranch dressing",
+    "category": "Spreads, nuts & oils"
+  },
+  {
+    "fdc_id": 170317,
+    "name": "Cheese pizza",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 172096,
+    "name": "Pepperoni pizza",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 170718,
+    "name": "Chicken nuggets",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 170690,
+    "name": "Cheeseburger",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 173325,
+    "name": "Macaroni and cheese",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 169676,
+    "name": "Granola bar",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 167959,
+    "name": "Popcorn (air-popped)",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 169677,
+    "name": "Potato chips",
+    "category": "Meals & snacks"
+  },
+  {
+    "fdc_id": 169098,
+    "name": "Orange juice",
+    "category": "Drinks"
+  },
+  {
+    "fdc_id": 171890,
+    "name": "Black coffee",
+    "category": "Drinks"
+  },
+  {
+    "fdc_id": 173227,
+    "name": "Tea (unsweetened)",
+    "category": "Drinks"
+  }
+]

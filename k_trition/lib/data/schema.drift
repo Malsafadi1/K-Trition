@@ -1,0 +1,44 @@
+CREATE TABLE foods (
+  fdc_id INTEGER NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  source_name TEXT NOT NULL,
+  kcal_per_g REAL NOT NULL CHECK(kcal_per_g >= 0),
+  protein_per_g REAL NOT NULL CHECK(protein_per_g >= 0),
+  carbs_per_g REAL NOT NULL CHECK(carbs_per_g >= 0),
+  fat_per_g REAL NOT NULL CHECK(fat_per_g >= 0),
+  is_listed BOOLEAN NOT NULL DEFAULT TRUE,
+  is_common BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE INDEX foods_search ON foods(name COLLATE NOCASE,fdc_id);
+CREATE TABLE meals (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  meal_type TEXT NOT NULL,
+  logged_at INTEGER NOT NULL
+);
+CREATE INDEX meals_date ON meals(logged_at);
+CREATE TABLE meal_items (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  meal_id INTEGER NOT NULL REFERENCES meals(id) ON DELETE CASCADE,
+  food_id INTEGER NOT NULL REFERENCES foods(fdc_id),
+  food_name TEXT NOT NULL,
+  grams REAL NOT NULL CHECK(grams > 0),
+  kcal_per_g REAL NOT NULL,
+  protein_per_g REAL NOT NULL,
+  carbs_per_g REAL NOT NULL,
+  fat_per_g REAL NOT NULL
+);
+CREATE INDEX items_meal ON meal_items(meal_id);
+CREATE TABLE water_entries (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  ounces REAL NOT NULL CHECK(ounces > 0),
+  logged_at INTEGER NOT NULL
+);
+CREATE INDEX water_date ON water_entries(logged_at);
+CREATE TABLE goals (
+  effective_date TEXT NOT NULL PRIMARY KEY,
+  calories REAL NOT NULL CHECK(calories > 0),
+  water_ounces REAL NOT NULL CHECK(water_ounces > 0)
+);
+CREATE TABLE catalog_state (version INTEGER NOT NULL PRIMARY KEY);

@@ -53,3 +53,9 @@ app.*.map.json
 *.db
 *.sqlite
 *.sqlite3
+*.sqlite-*
+*.sqlite3-*
+*.db-*
+
+# Keep reproducible application dependencies
+!pubspec.lock
