@@ -1,0 +1,32 @@
+{
+  "source": "FoodData_Central_csv_2026-04-30",
+  "foods": 5084,
+  "common_foods": 44,
+  "excluded_missing_required_nutrients": 89,
+  "by_type": {
+    "sr_legacy_food": 4744,
+    "foundation_food": 340
+  },
+  "by_category": {
+    "Fruits and Fruit Juices": 418,
+    "Finfish and Shellfish Products": 284,
+    "Vegetables and Vegetable Products": 904,
+    "Nut and Seed Products": 156,
+    "Cereal Grains and Pasta": 222,
+    "Fats and Oils": 217,
+    "Legumes and Legume Products": 312,
+    "Pork Products": 341,
+    "Spices and Herbs": 64,
+    "Beef Products": 975,
+    "Dairy and Egg Products": 338,
+    "Lamb, Veal, and Game Products": 464,
+    "Poultry Products": 389
+  },
+  "notes": [
+    "Source categories focus on basic foods; some category members include preparation/ingredients and retain their full source descriptions.",
+    "No branded or survey records, baby food, beverages/alcohol, sweets, restaurant/fast-food or snack categories.",
+    "Required missing values are excluded, never guessed or converted to zero.",
+    "Nutrients normalized from per 100 g; energy priority 1008 then 2048 then 2047 (kcal only).",
+    "Source IDs/variants retained; common-food aliases select individual representative records, not averages."
+  ]
+}

@@ -1,5 +1,10 @@
-# Local data layer (planned)
+# Local SQLite data layer
 
-Choose a local database package together before implementing storage. No database or persistence dependency is installed yet.
+Start with [the database/UI integration guide](../../docs/DATABASE_GUIDE.md).
 
-Suggested tables: foods, meals, meal_items, water_entries, and goals. Keep database access here so widgets do not contain SQL or storage code. See ../../docs/MVP.md for the proposed schema.
+- 5,084 USDA SR Legacy/Foundation foods, plus a 44-food common-choice filter
+- Food search, quantity-based calories/macros, meal/water CRUD, dated goals
+- Live daily progress streams and persistent SQLite storage
+- No Firebase, login, cloud project, or UI integration yet
+
+Teammates should use `NutritionRepository.open()` once and pass the repository to their future screens. The current starter UI remains unchanged.
