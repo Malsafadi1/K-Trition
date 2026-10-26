@@ -8,13 +8,14 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  static const _green = Color(0xFF39794A);
-  static const _blue = Color(0xFF4D9BCB);
-  static const _ink = Color(0xFF24352A);
-  static const _muted = Color(0xFF7B877F);
-  static const _page = Color(0xFFFCFAF6);
-  static const _goalCalories = 2000;
-  static const _goalWater = 64;
+  static const _orange = Color(0xFFF28C28);
+  static const _ink = Color(0xFF171717);
+  static const _muted = Color(0xFF707070);
+  static const _page = Colors.white;
+  static const _border = Color(0xFFE5E5E5);
+  static const _softAccent = Color(0xFFFFF1E3);
+  static const _panel = Color(0xFFF5F5F5);
+  static const _track = Color(0xFFECECEC);
   static const _mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
   static const _waterChoices = [8, 16, 24, 32];
 
@@ -25,6 +26,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<_FoodEntry> _foodEntries = [];
   final List<_WaterEntry> _waterEntries = [];
 
+  int _goalCalories = 2000;
+  int _goalWater = 64;
   DateTime _selectedDate = DateTime.now();
   String _selectedMeal = _mealTypes.first;
   int _selectedWaterChoice = 8;
@@ -113,13 +116,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     tooltip: 'Choose date',
                     onPressed: _chooseDate,
                     icon: const Icon(Icons.calendar_month_outlined),
-                    color: _green,
+                    color: _orange,
                   ),
                   const Spacer(),
                   const Text(
                     'K-Trition',
                     style: TextStyle(
-                      color: _green,
+                      color: _orange,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                     ),
@@ -129,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     tooltip: 'Settings',
                     onPressed: () => _showMessage('Settings are coming soon.'),
                     icon: const Icon(Icons.settings_outlined),
-                    color: _green,
+                    color: _orange,
                   ),
                 ],
               ),
@@ -167,7 +170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Text(
               'History',
               style: TextStyle(
-                color: _green,
+                color: _orange,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -189,11 +192,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           Expanded(
             child: _ProgressCard(
-              color: _green,
+              color: _orange,
               icon: Icons.restaurant,
               label: 'Calories',
               value: _formatNumber(_totalCalories),
-              unit: 'kcal',
+              unit: 'Cal',
               goal: _goalCalories,
               progress: _totalCalories / _goalCalories,
             ),
@@ -201,7 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: _ProgressCard(
-              color: _blue,
+              color: _orange,
               icon: Icons.water_drop,
               label: 'Water',
               value: _formatNumber(_waterAmount),
@@ -211,6 +214,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+      const SizedBox(height: 10),
+      OutlinedButton.icon(
+        onPressed: _editGoals,
+        icon: const Icon(Icons.track_changes_outlined, size: 17),
+        label: const Text('Edit Goals'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _ink,
+          side: const BorderSide(color: _orange),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+          visualDensity: VisualDensity.compact,
+        ),
       ),
       const SizedBox(height: 14),
       _sectionLabel('Log Food'),
@@ -228,7 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           TextButton(
             onPressed: () => setState(() => _showAllFood = !_showAllFood),
             style: TextButton.styleFrom(
-              foregroundColor: _blue,
+              foregroundColor: _orange,
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 6),
             ),
@@ -240,6 +255,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _buildFoodList(limit: _showAllFood ? null : 2),
     ],
   );
+
+  Future<void> _editGoals() async {
+    final formKey = GlobalKey<FormState>();
+    var caloriesGoal = _goalCalories;
+    var waterGoal = _goalWater;
+
+    String? validateGoal(String? value, String label) {
+      final goal = int.tryParse(value?.trim() ?? '');
+      if (goal == null || goal <= 0) {
+        return '$label must be a whole number greater than zero.';
+      }
+      return null;
+    }
+
+    final goals = await showDialog<(int, int)>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Edit daily goals'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                initialValue: _goalCalories.toString(),
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Calories (Cal)'),
+                validator: (value) => validateGoal(value, 'Calorie goal'),
+                onSaved: (value) => caloriesGoal = int.parse(value!.trim()),
+              ),
+              TextFormField(
+                initialValue: _goalWater.toString(),
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Water (Oz)'),
+                validator: (value) => validateGoal(value, 'Water goal'),
+                onSaved: (value) => waterGoal = int.parse(value!.trim()),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                formKey.currentState!.save();
+                Navigator.of(dialogContext).pop((caloriesGoal, waterGoal));
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (goals == null || !mounted) return;
+    setState(() {
+      _goalCalories = goals.$1;
+      _goalWater = goals.$2;
+    });
+  }
 
   Widget _sectionLabel(String label) => Text(
     label,
@@ -292,15 +371,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   showCheckmark: false,
                   onSelected: (_) => setState(() => _selectedMeal = meal),
                   labelStyle: TextStyle(
-                    color: selected ? _green : _ink,
+                    color: selected ? _orange : _ink,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
                   backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFFEAF2E9),
-                  side: BorderSide(
-                    color: selected ? _green : const Color(0xFFE5E8E3),
-                  ),
+                  selectedColor: _softAccent,
+                  side: BorderSide(color: selected ? _orange : _border),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
@@ -319,7 +396,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: FilledButton(
             onPressed: _addFood,
             style: FilledButton.styleFrom(
-              backgroundColor: _green,
+              backgroundColor: _orange,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(9),
@@ -358,13 +435,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _waterController.text = amount.toString();
                   }),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: selected ? _blue : _ink,
-                    backgroundColor: selected
-                        ? const Color(0xFFEAF5FA)
-                        : Colors.white,
-                    side: BorderSide(
-                      color: selected ? _blue : const Color(0xFFE5E8E3),
-                    ),
+                    foregroundColor: selected ? _orange : _ink,
+                    backgroundColor: selected ? _softAccent : Colors.white,
+                    side: BorderSide(color: selected ? _orange : _border),
                     padding: const EdgeInsets.symmetric(horizontal: 2),
                     minimumSize: const Size(0, 31),
                     shape: RoundedRectangleBorder(
@@ -393,7 +466,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: const Icon(Icons.water_drop, size: 15),
             label: const Text('Add Water', style: TextStyle(fontSize: 12)),
             style: FilledButton.styleFrom(
-              backgroundColor: _blue,
+              backgroundColor: _orange,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(9),
@@ -426,15 +499,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       fillColor: Colors.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(7),
-        borderSide: const BorderSide(color: Color(0xFFE8EAE6)),
+        borderSide: const BorderSide(color: _border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(7),
-        borderSide: const BorderSide(color: Color(0xFFE8EAE6)),
+        borderSide: const BorderSide(color: _border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(7),
-        borderSide: const BorderSide(color: _green),
+        borderSide: const BorderSide(color: _orange),
       ),
     ),
   );
@@ -458,7 +531,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFECEEEA)),
+        border: Border.all(color: _border),
       ),
       child: Column(
         children: [
@@ -504,7 +577,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         Text(
-          '${_formatNumber(entry.calories)} kcal',
+          '${_formatNumber(entry.calories)} Cal',
           style: const TextStyle(color: _ink, fontSize: 10),
         ),
         PopupMenuButton<String>(
@@ -528,7 +601,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
     decoration: BoxDecoration(
       color: Colors.white,
-      border: Border.all(color: const Color(0xFFECEEEA)),
+      border: Border.all(color: _border),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Column(
@@ -593,7 +666,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 4),
                   CircleAvatar(
                     radius: 14,
-                    backgroundColor: selected ? _green : Colors.transparent,
+                    backgroundColor: selected ? _orange : Colors.transparent,
                     child: Text(
                       '${date.day}',
                       style: TextStyle(
@@ -649,7 +722,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: CircleAvatar(
                       radius: 13,
-                      backgroundColor: selected ? _green : Colors.transparent,
+                      backgroundColor: selected ? _orange : Colors.transparent,
                       child: Text(
                         '${date.day}',
                         style: TextStyle(
@@ -657,7 +730,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ? Colors.white
                               : inMonth
                               ? _ink
-                              : const Color(0xFFB9C0BB),
+                              : _muted,
                           fontSize: 10,
                         ),
                       ),
@@ -679,7 +752,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }) => Container(
     decoration: BoxDecoration(
       color: Colors.white,
-      border: Border.all(color: const Color(0xFFECEEEA)),
+      border: Border.all(color: _border),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Column(
@@ -725,7 +798,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     padding: const EdgeInsets.fromLTRB(11, 5, 5, 5),
     child: Row(
       children: [
-        const Icon(Icons.water_drop_outlined, color: _blue, size: 18),
+        const Icon(Icons.water_drop_outlined, color: _orange, size: 18),
         const SizedBox(width: 9),
         Text(
           '${entry.amountOz} Oz',
@@ -834,16 +907,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
             ),
             foregroundColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.selected) ? _green : _ink,
+              (states) =>
+                  states.contains(WidgetState.selected) ? _orange : _ink,
             ),
             backgroundColor: WidgetStateProperty.resolveWith(
-              (states) => states.contains(WidgetState.selected)
-                  ? Colors.white
-                  : const Color(0xFFF3F2ED),
+              (states) =>
+                  states.contains(WidgetState.selected) ? Colors.white : _panel,
             ),
-            side: const WidgetStatePropertyAll(
-              BorderSide(color: Color(0xFFE6E8E3)),
-            ),
+            side: const WidgetStatePropertyAll(BorderSide(color: _border)),
           ),
         ),
         const SizedBox(height: 10),
@@ -860,8 +931,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 8),
         _buildHistorySection(
           title: 'Food',
-          summary: '${_formatNumber(_sumCalories(foods))} kcal',
-          summaryColor: _green,
+          summary: '${_formatNumber(_sumCalories(foods))} Cal',
+          summaryColor: _orange,
           child: foods.isEmpty
               ? _emptyHistoryMessage('No food logged for this period.')
               : Column(
@@ -878,7 +949,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _buildHistorySection(
           title: 'Water',
           summary: '${_formatNumber(_sumWater(waters))} Oz',
-          summaryColor: _blue,
+          summaryColor: _orange,
           child: waters.isEmpty
               ? _emptyHistoryMessage('No water logged for this period.')
               : Column(
@@ -899,7 +970,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     currentIndex: _selectedTab,
     onTap: (index) => setState(() => _selectedTab = index),
     backgroundColor: Colors.white,
-    selectedItemColor: _green,
+    selectedItemColor: _orange,
     unselectedItemColor: _muted,
     selectedFontSize: 10,
     unselectedFontSize: 10,
@@ -1122,7 +1193,7 @@ class _ProgressCard extends StatelessWidget {
     padding: const EdgeInsets.all(10),
     decoration: BoxDecoration(
       color: Colors.white,
-      border: Border.all(color: const Color(0xFFECEEEA)),
+      border: Border.all(color: _DashboardScreenState._border),
       borderRadius: BorderRadius.circular(13),
     ),
     child: Column(
@@ -1143,7 +1214,7 @@ class _ProgressCard extends StatelessWidget {
                   Text(
                     label,
                     style: const TextStyle(
-                      color: Color(0xFF7B877F),
+                      color: _DashboardScreenState._muted,
                       fontSize: 9,
                     ),
                   ),
@@ -1154,7 +1225,7 @@ class _ProgressCard extends StatelessWidget {
                       TextSpan(
                         text: value,
                         style: const TextStyle(
-                          color: Color(0xFF24352A),
+                          color: _DashboardScreenState._ink,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1180,7 +1251,10 @@ class _ProgressCard extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: Text(
             '/ ${_DashboardScreenState._formatNumber(goal)} $unit',
-            style: const TextStyle(color: Color(0xFF7B877F), fontSize: 9),
+            style: const TextStyle(
+              color: _DashboardScreenState._muted,
+              fontSize: 9,
+            ),
           ),
         ),
         const SizedBox(height: 5),
@@ -1189,7 +1263,7 @@ class _ProgressCard extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress.clamp(0, 1),
             minHeight: 5,
-            backgroundColor: const Color(0xFFEFF1ED),
+            backgroundColor: _DashboardScreenState._track,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -1207,7 +1281,7 @@ class _SectionPanel extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(8),
     decoration: BoxDecoration(
-      color: const Color(0xFFF4F6EF),
+      color: _DashboardScreenState._panel,
       borderRadius: BorderRadius.circular(12),
     ),
     child: child,

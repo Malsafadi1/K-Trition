@@ -59,7 +59,31 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Apple - 150 g'), findsOneWidget);
     expect(find.text('16 Oz'), findsWidgets);
-    expect(find.text('100 kcal'), findsWidgets);
+    expect(find.text('100 Cal'), findsWidgets);
+  });
+
+  testWidgets('daily goals can be edited and reject non-positive values', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const KTritionApp());
+    await tester.tap(find.text('Edit Goals'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField).at(0), '0');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Calorie goal must be a whole number greater than zero.'),
+      findsOneWidget,
+    );
+
+    await tester.enterText(find.byType(TextFormField).at(0), '2500');
+    await tester.enterText(find.byType(TextFormField).at(1), '80');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('/ 2,500 Cal'), findsOneWidget);
+    expect(find.text('/ 80 Oz'), findsOneWidget);
   });
 
   testWidgets('history starts empty and switches between date ranges', (
