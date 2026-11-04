@@ -1,32 +1,34 @@
-# K-Trition
+# K-Trition Flutter app
 
-Group Flutter nutrition tracker for Kalamazoo College students.
+K-Trition is a nutrition-tracking app for Kalamazoo College students. This repository contains a working Flutter dashboard prototype and a separate local nutrition database layer.
 
-## Current state
+## What works in the app
 
-A complete local SQLite/Drift data layer is ready for UI integration. The existing UI intentionally remains the MVP roadmap.
+- Add a food entry by typing its name, serving size in grams (optional), and calories (optional). Choose Breakfast, Lunch, Dinner, or Snack.
+- Add water in US fluid ounces, using a quick amount or a custom amount.
+- View daily calorie and water totals, set daily goals, and browse entries by day, week, or month.
+- Delete food and water entries.
 
-- 5,084 USDA SR Legacy/Foundation foods from core food categories
-- 44 common choices with plain names, plus full paginated catalog search
-- Quantity-based calories and macros; food weights in grams
-- Meal/water CRUD, water in US fluid ounces, dated goals
-- Live progress streams, history queries and persistent local storage
-- No Firebase project, login, server, or cloud configuration needed
+**Important:** The current dashboard keeps entries and goals in memory. They are lost when the app restarts. Food names and calories are entered manually; the screen does not yet search the bundled food catalog or show macronutrients. Settings are not implemented.
 
-Start with [the database/UI guide](docs/DATABASE_GUIDE.md). Review source counts in `assets/data/import_report.json` or browse `assets/data/foods_preview.csv` in Excel.
+The project also includes a separate SQLite database layer, powered by Drift, with a USDA food catalog, nutrient calculations, meal and water operations, dated goals, and persistent local storage. The dashboard does not use this database yet. See the [database guide](docs/DATABASE_GUIDE.md) for what the data layer supports and how to use it.
 
-## Run
+## Run the app
 
-Install Flutter (tested with 3.47.7), then from this directory:
+Install Flutter and Chrome, open a terminal in this `k_trition` folder, and run:
 
 ```sh
 flutter pub get
 flutter run -d chrome --web-port=7357
 ```
 
-In the original class workspace, use `../../flutter/bin/flutter` instead of `flutter`. Android and iOS require their respective toolchains. A fixed browser port keeps local data on the same origin.
+Open the URL printed by Flutter (normally `http://localhost:7357`). Keep the same host and port when testing browser database storage: browser storage is separated by origin.
 
-## Check
+To run on another platform, use `flutter devices` to see available targets and replace `chrome` in the run command with the desired device ID. Android and iOS builds require their platform toolchains. On Windows, use PowerShell or Command Prompt; in a shell where the Flutter command is not on `PATH`, run the Flutter SDK's `bin/flutter` command instead.
+
+## Check the project
+
+Run these commands from this folder:
 
 ```sh
 flutter analyze
@@ -34,10 +36,11 @@ flutter test
 flutter build web
 ```
 
-The starter screen does not show database content yet. To test the database directly, run the tests or the optional browser smoke check in [TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md).
+The tests cover the dashboard prototype and the database layer. The optional [browser database smoke check](docs/TEAM_WORKFLOW.md#optional-browser-database-check) exercises the real web database separately from the dashboard.
 
-## Team development
+## Project guides
 
-Use [the push/pull and conflict-reduction instructions](docs/TEAM_WORKFLOW.md). Work on separate feature branches and review pull requests. The database owner maintains SQL/generated files; UI teammates call NutritionRepository.
-
-Commit the bundled public food catalog, SQL, generated database code and dependency lockfile. Do not commit personal live databases, credentials, build folders or the Flutter SDK. Every device has its own private local logs; code changes are shared through GitHub.
+- [Current features and next steps](docs/MVP.md)
+- [Database guide](docs/DATABASE_GUIDE.md)
+- [Team Git workflow](docs/TEAM_WORKFLOW.md)
+- [Firebase status](docs/FIREBASE_SETUP.md)

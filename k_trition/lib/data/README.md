@@ -1,10 +1,7 @@
-# Local SQLite data layer
+# Local data layer
 
-Start with [the database/UI integration guide](../../docs/DATABASE_GUIDE.md).
+This folder contains K-Trition's local SQLite database and the `NutritionRepository` API that app screens can use. It is built with Drift and does not require Firebase, a sign-in, or an internet connection.
 
-- 5,084 USDA SR Legacy/Foundation foods, plus a 44-food common-choice filter
-- Food search, quantity-based calories/macros, meal/water CRUD, dated goals
-- Live daily progress streams and persistent SQLite storage
-- No Firebase, login, cloud project, or UI integration yet
+The repository and USDA food catalog are implemented and covered by tests. **The current dashboard does not use this data layer yet**; its prototype entries are stored only in memory and disappear when the app restarts.
 
-Teammates should use `NutritionRepository.open()` once and pass the repository to their future screens. The current starter UI remains unchanged.
+Start with the [database guide](../../docs/DATABASE_GUIDE.md) for setup, supported operations, units, examples, and testing. Open the repository once for the app and share it with screens; do not create a new database for every widget build.

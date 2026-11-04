@@ -1,77 +1,64 @@
-# Team workflow: database + UI branches
+# Team workflow
 
-No workflow can guarantee zero merge conflicts. Keeping database changes and UI work on separate feature branches, using one schema owner, and merging small reviewed pull requests reduces them.
+Use feature branches and small pull requests so teammates can work in parallel. This reduces merge conflicts, but cannot eliminate them.
 
-## Push this database work (repository root)
+## Set up the project
 
-Your local database changes are not committed or pushed automatically. From the class workspace:
-
-```sh
-cd "/Users/mahmoudalsafadi/Desktop/comp_489:90/K-Trition"
-git switch -c feature/local-database
-git add k_trition .github
-git diff --cached --stat
-git commit -m "Add local USDA database and UI-ready repository"
-git push -u origin feature/local-database
-```
-
-If that branch already exists, use `git switch feature/local-database`. Review staged files before committing. The scoped `git add` intentionally leaves the unrelated root `.DS_Store` change out. Do not use `git add .` if you have unrelated changes.
-
-On GitHub, open a pull request from `feature/local-database` to `main`, ask a teammate to review it, and wait for the checks to pass before merging. This is code review, not database-data synchronization.
-
-## Teammates: get the database
-
-After the pull request has been merged:
+Clone the repository, then open a terminal in the `k_trition` folder:
 
 ```sh
-git clone https://github.com/Malsafadi1/K-Trition.git
-cd K-Trition/k_trition
 flutter pub get
 flutter test
 flutter run -d chrome --web-port=7357
 ```
 
-Before merging, teammates can test the feature branch instead:
+Install Flutter and Chrome first. Check that Flutter is available by running `flutter --version`. If the `flutter` command is not on your `PATH`, run the `flutter` executable from your Flutter SDK's `bin` folder instead. Use your platform's terminal and path syntax. Android and iOS targets require their respective toolchains.
+
+When using the database in a browser, its storage is scoped to the origin (host and port). Keep using port `7357` when testing browser database persistence. The current dashboard itself is a prototype and keeps its entries in memory; the repository's persistent database is implemented separately and has not been connected to that screen.
+
+## Branch and pull request workflow
+
+Run Git commands from the repository root. Start a feature branch from the latest `main`:
 
 ```sh
-git clone --branch feature/local-database https://github.com/Malsafadi1/K-Trition.git
-```
-
-Everyone needs their own Flutter installation (tested here with 3.47.7). Never add the Flutter SDK itself to this repo. In Mahmoud's existing class workspace, use `../../flutter/bin/flutter` in place of `flutter` from the Flutter project directory. The app still displays the starter roadmap because UI integration is intentionally pending. The database tests actually exercise SQLite.
-
-## Teammates: update an existing clean checkout
-
-From the repository root, first run `git status`. Commit your own work on your feature branch before switching branches. Then:
-
-```sh
+git status
 git switch main
 git pull --ff-only origin main
-git switch -c feature/food-ui
-cd k_trition
-flutter pub get
+git switch -c feature/short-description
 ```
 
-Use separate names for each person's branch (e.g. `feature/food-ui`, `feature/water-goals-ui`). If you cannot commit unfinished work, stash it with `git stash push -u -m "Save unfinished work"`; restore only on its original branch with `git stash pop`. Restoring a stash can itself need conflict resolution.
+Before switching branches, commit your work or save it with `git stash push -u -m "Save unfinished work"`. Restore a stash only on the branch where you created it.
 
-To incorporate newer main changes into an existing feature branch, with a clean working tree:
+Stage only files related to your change. Review the staged diff before committing:
+
+```sh
+git add path/to/your/files
+git diff --cached
+git commit -m "Describe the change"
+git push -u origin feature/short-description
+```
+
+Open a pull request from your feature branch to `main`. Ask a teammate to review it and wait for required checks before merging. Do not force-push `main`, overwrite another person's changes, or accept all conflict resolutions without reviewing them.
+
+To bring newer `main` changes into an existing feature branch, first make sure your work is committed or safely stashed, then run:
 
 ```sh
 git fetch origin
 git merge origin/main
 ```
 
-Resolve conflicts by discussing overlapping changes, then rerun tests. Do not force-push main, delete a teammate's work, or choose “accept all” without reviewing what it removes.
+## Coordinate changes
 
-## Ownership to minimize conflicts
+- Database changes belong in `lib/data/`, the Drift schema, catalog/import files, and related tests. Coordinate schema changes with the database owner.
+- Screen changes belong in the relevant feature area. The current dashboard is implemented in `lib/features/dashboard/dashboard_screen.dart`.
+- Coordinate shared edits to `pubspec.yaml`, `pubspec.lock`, `main.dart`, app themes, and navigation.
+- Commit `pubspec.lock` and generated `database.g.dart` when required. Do not hand-edit generated files or routinely run `pub upgrade`.
+- After changing the database schema, regenerate Drift code with `dart run build_runner build` from `k_trition/`; update the schema version and add migration tests when the schema has shipped.
+- Git shares source code and the bundled public food catalog, not private user databases. Each device or browser origin has separate local data.
 
-- Database owner: `lib/data/`, `schema.drift`, catalog/import scripts and schema migrations.
-- UI owners: their screen/feature folders; use the public NutritionRepository API.
-- Coordinate shared edits to `pubspec.yaml`, `pubspec.lock`, `main.dart`, themes and navigation.
-- Commit `database.g.dart` and `pubspec.lock`. Do not hand-edit generated database code or run `pub upgrade` as part of routine setup.
-- If SQL changes, the database owner runs `dart run build_runner build`, commits SQL + generated code + migration tests together.
-- GitHub shares public food fixtures and code, not each person's private meal/water database.
+## Check changes before a pull request
 
-## Checks before each pull request
+Run from the `k_trition` folder:
 
 ```sh
 flutter analyze
@@ -79,10 +66,12 @@ flutter test
 flutter build web
 ```
 
-For an optional real browser database check:
+## Optional browser database check
+
+This runs the repository against a separate browser database and does not use the dashboard:
 
 ```sh
 flutter run -d chrome -t tool/database_smoke_check.dart --web-port=7358
 ```
 
-Look for `DATABASE_CHECK_PASSED` in the terminal. This uses a separate check database. No cloud setup or Firebase login is required.
+Look in the Flutter terminal for `DATABASE_CHECK_PASSED`. The check creates and reads a water record, then removes it. It does not need Firebase or a login.

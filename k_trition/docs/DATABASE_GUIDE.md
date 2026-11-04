@@ -1,6 +1,8 @@
-# Local database: UI integration guide
+# Local database guide
 
-**Chosen backend: SQLite through Drift. No Firebase accounts, server, API keys, or cloud connection are needed.** The starter UI is unchanged; this is the data layer your teammates connect to their screens.
+**Storage:** local SQLite through Drift. No Firebase account, server, API key, or cloud connection is needed.
+
+The app currently has a working dashboard prototype for food and water logging, goals, and history. That screen keeps its data in memory and does not use this database yet. This guide describes the separate, implemented database API; connecting it to the dashboard is still work to do. See [Current features and next steps](MVP.md).
 
 ## Catalog scope
 
@@ -49,7 +51,7 @@ Food quantities are **edible grams** matching the listed preparation. Water is s
 
 A meal can contain multiple meal items. Deleting a meal cascades to its items. Saves/edits are transactional: failure leaves the original entry intact. Food nutrition is snapshotted into each meal item; existing food snapshots are preserved during edits even if catalog nutrition later changes. Adding a new food uses its current catalog values.
 
-## Open once, pass to screens later
+## Open once and share with the app
 
 ```dart
 import 'package:flutter/widgets.dart';
@@ -57,12 +59,12 @@ import 'package:k_trition/data/nutrition_repository.dart';
 
 WidgetsFlutterBinding.ensureInitialized();
 final repository = await NutritionRepository.open();
-// Pass this ONE repository to the future screens or your app's state provider.
-// Show loading/error states while opening. Close it when its owner is disposed:
+// Share this repository with screens or your app's state provider.
+// Show loading/error states while it opens. Close it when its owner is disposed:
 // await repository.close();
 ```
 
-Do not open a new database on every widget build. This code is intentionally **not called by main.dart yet**. The existing app still opens the MVP roadmap.
+Do not open a new database on every widget build. The current `main.dart` does not open the repository yet, so the dashboard's prototype logs and goals are not saved to SQLite.
 
 ## Food selection and quantity previews
 
@@ -76,7 +78,7 @@ final food = await repository.getFood(171688); // Apple
 final preview = repository.calculate(food, 150); // 78 calories
 ```
 
-Search matches substrings without case sensitivity and has stable name/ID ordering. Maximum page size is 100. Do not render the entire 5,084-item catalog at once. A future UI can start with common foods, then offer full-catalog search. `watchFoods(...)` provides a stream with the same query parameters.
+Search matches substrings without case sensitivity and has stable name/ID ordering. Maximum page size is 100. Do not render the entire 5,084-item catalog at once. A catalog screen can start with common foods, then offer full-catalog search. `watchFoods(...)` provides a stream with the same query parameters.
 
 ## Log, edit and delete
 
@@ -109,7 +111,7 @@ final history = await repository.progressForRange(
 );
 ```
 
-Pass an existing ID to edit; a missing ID throws instead of silently recreating a deleted entry. Deleting a missing ID returns zero. Supported meal types: Breakfast, Lunch, Dinner, Snack. Catch exceptions in the future UI; await successful writes before showing success, and preserve input on failure.
+Pass an existing ID to edit; a missing ID throws instead of silently recreating a deleted entry. Deleting a missing ID returns zero. Supported meal types: Breakfast, Lunch, Dinner, Snack. In the UI, handle errors explicitly, wait for a write to succeed before showing success, and preserve the user's input if it fails.
 
 ## Live data and dates
 
@@ -122,7 +124,7 @@ final stream = repository.watchDailyProgress(selectedDate);
 
 `watchMeals(day)` and `watchWater(day)` also update after changes. Streams respond to edits/deletions and goal changes; totals are derived, not stored separately. Goal history uses the last effective date on or before the requested day. A new target does not rewrite earlier days.
 
-Daily windows run from local midnight to the next local midnight, so daylight-saving days are handled as calendar days rather than fixed 24-hour intervals. The UI must pass the same selected date to all forms and lists and recreate its streams when the date changes or midnight arrives. Historical grouping follows the device's current timezone. `progressForRange` supports up to 366 calendar days, with an exclusive end.
+Daily windows run from local midnight to the next local midnight, so daylight-saving days are handled as calendar days rather than fixed 24-hour intervals. When integrating the repository, pass the same selected date to forms and lists and recreate streams when the date changes or midnight arrives. Historical grouping follows the device's current timezone. `progressForRange` supports up to 366 calendar days, with an exclusive end.
 
 ## Persistence and ownership
 
