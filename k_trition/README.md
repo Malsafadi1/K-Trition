@@ -1,17 +1,16 @@
 # K-Trition Flutter app
 
-K-Trition is a nutrition-tracking app for Kalamazoo College students. This repository contains a working Flutter dashboard prototype and a separate local nutrition database layer.
+K-Trition is a Flutter nutrition tracker for Kalamazoo College students, backed by a persistent local SQLite database through Drift.
 
-## What works in the app
+## What works
 
-- Add a food entry by typing its name, serving size in grams (optional), and calories (optional). Choose Breakfast, Lunch, Dinner, or Snack.
-- Add water in US fluid ounces, using a quick amount or a custom amount.
-- View daily calorie and water totals, set daily goals, and browse entries by day, week, or month.
-- Delete food and water entries.
+- Browse **300 everyday foods** across five categories, or search and scroll through matches.
+- Select a food, enter edible grams, and calculate calories from its USDA baseline.
+- Save meals by Breakfast, Lunch, Dinner or Snack; track water in **US fluid ounces**.
+- Set dated calorie/water goals and view daily progress and day/week/month history.
+- Delete logged entries. Logs and goals persist locally between sessions.
 
-**Important:** The current dashboard keeps entries and goals in memory. They are lost when the app restarts. Food names and calories are entered manually; the screen does not yet search the bundled food catalog or show macronutrients. Settings are not implemented.
-
-The project also includes a separate SQLite database layer, powered by Drift, with a USDA food catalog, nutrient calculations, meal and water operations, dated goals, and persistent local storage. The dashboard does not use this database yet. See the [database guide](docs/DATABASE_GUIDE.md) for what the data layer supports and how to use it.
+The repository also supports multi-food meals, edits and macronutrient totals. Editing controls, a macro summary, and a settings screen remain UI work. There is no sign-in, server or cloud sync.
 
 ## Run the app
 
@@ -31,16 +30,17 @@ To run on another platform, use `flutter devices` to see available targets and r
 Run these commands from this folder:
 
 ```sh
+python3 -m unittest discover -s tool -p 'test_clean_food_catalog.py'
 flutter analyze
 flutter test
 flutter build web
 ```
 
-The tests cover the dashboard prototype and the database layer. The optional [browser database smoke check](docs/TEAM_WORKFLOW.md#optional-browser-database-check) exercises the real web database separately from the dashboard.
+The tests cover category browsing, search/scrolling, logging, goals, dates, and database persistence. The optional [browser database smoke check](docs/TEAM_WORKFLOW.md#optional-browser-database-check) exercises the real web database separately from the dashboard.
 
 ## Project guides
 
 - [Current features and next steps](docs/MVP.md)
 - [Database guide](docs/DATABASE_GUIDE.md)
 - [Team Git workflow](docs/TEAM_WORKFLOW.md)
-- [Firebase status](docs/FIREBASE_SETUP.md)
+- [Core 300 catalog maintenance](tool/FOOD_CLEANUP.md)

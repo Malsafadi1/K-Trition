@@ -14,7 +14,7 @@ flutter run -d chrome --web-port=7357
 
 Install Flutter and Chrome first. Check that Flutter is available by running `flutter --version`. If the `flutter` command is not on your `PATH`, run the `flutter` executable from your Flutter SDK's `bin` folder instead. Use your platform's terminal and path syntax. Android and iOS targets require their respective toolchains.
 
-When using the database in a browser, its storage is scoped to the origin (host and port). Keep using port `7357` when testing browser database persistence. The current dashboard itself is a prototype and keeps its entries in memory; the repository's persistent database is implemented separately and has not been connected to that screen.
+When using the database in a browser, its storage is scoped to the origin (host and port). Keep using port `7357` when testing browser database persistence. The dashboard uses the persistent local database. Keep a stable host and port to see the same browser logs.
 
 ## Branch and pull request workflow
 
@@ -61,6 +61,7 @@ git merge origin/main
 Run from the `k_trition` folder:
 
 ```sh
+python3 -m unittest discover -s tool -p 'test_clean_food_catalog.py'
 flutter analyze
 flutter test
 flutter build web
@@ -75,3 +76,17 @@ flutter run -d chrome -t tool/database_smoke_check.dart --web-port=7358
 ```
 
 Look in the Flutter terminal for `DATABASE_CHECK_PASSED`. The check creates and reads a water record, then removes it. It does not need Firebase or a login.
+
+## Pull this version
+
+Commit or stash local work first, then run from the repository root:
+
+```sh
+git switch main
+git pull --ff-only origin main
+cd k_trition
+flutter pub get
+flutter run -d chrome --web-port=7357
+```
+
+If Git reports a conflict, stop and coordinate with the file owner. Do not use `reset --hard` or force-push to bypass teammates’ changes. No USDA download, Python packages or Firebase setup is needed to run the app. Catalog updates archive old food choices and retain historical meal snapshots; do not clear the database to install an update.

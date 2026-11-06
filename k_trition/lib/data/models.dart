@@ -1,3 +1,6 @@
+/// Reserved app recipe ID (not a USDA FDC ID): 30 g whey + 240 g water.
+const wheyShakeFoodId = 900000001;
+
 DateTime localDay(DateTime date) {
   final d = date.toLocal();
   return DateTime(d.year, d.month, d.day);

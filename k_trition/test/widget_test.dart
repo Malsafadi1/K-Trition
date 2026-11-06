@@ -14,6 +14,11 @@ void main() {
 
     expect(find.text('K-Trition'), findsOneWidget);
     expect(find.text('Calories'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Amount (Oz)'),
+      120,
+      scrollable: _homeScroll(),
+    );
     expect(find.text('Amount (Oz)'), findsOneWidget);
     expect(find.text('Serving size (g)'), findsOneWidget);
     expect(find.text('8 Oz'), findsOneWidget);
@@ -27,6 +32,58 @@ void main() {
       find.text('No food logged yet. Add your first meal above.'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('simple food choices scroll and show their nutrition baseline', (
+    tester,
+  ) async {
+    await _pumpApp(tester);
+    await tester.enterText(find.byType(TextField).at(0), 'ch');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    final results = find.byType(ListView).last;
+    await tester.drag(results, const Offset(0, -250));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.enterText(find.byType(TextField).at(0), 'Apple');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byType(ListTile), matching: find.text('Apple')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Baseline: raw'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('category browsing works without a search term', (tester) async {
+    await _pumpApp(tester);
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Proteins').last);
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byType(ListTile),
+        matching: find.text('Beef steak'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: find.byType(ListTile), matching: find.text('Apple')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('food and water logging update daily totals', (tester) async {

@@ -15,10 +15,10 @@ void main() {
       );
       try {
         final all = await repo.database.select(repo.database.foods).get();
-        expect(all.length, 5084);
+        expect(all.length, 300);
         final foods = await repo.searchFoods(limit: 100, commonOnly: true);
-        expect(foods.length, 44);
-        expect(foods.map((f) => f.name.toLowerCase()).toSet().length, 44);
+        expect(foods.length, 42);
+        expect(foods.map((f) => f.name.toLowerCase()).toSet().length, 42);
         expect(
           foods.any(
             (f) => RegExp(
@@ -30,18 +30,14 @@ void main() {
         );
         expect(
           (await repo.searchFoods(
-            query: 'sirloin',
+            query: 'Beef steak',
             commonOnly: true,
           )).single.name,
-          'Sirloin steak (grilled)',
+          'Beef steak',
         );
         expect(
           await repo.getCategories(),
-          containsAll([
-            'Fruits and Fruit Juices',
-            'Beef Products',
-            'Vegetables and Vegetable Products',
-          ]),
+          containsAll(['Produce', 'Proteins', 'Grains & Carbs']),
         );
         final apple = (await repo.searchFoods(query: 'apple'))
             .firstWhere((f) => f.name == 'Apple');
@@ -51,10 +47,7 @@ void main() {
         expect(n.carbs, closeTo(20.715, 1e-8));
         expect(n.fat, closeTo(.255, 1e-8));
         expect(
-          (await repo.searchFoods(
-            category: 'Fruits and Fruit Juices',
-            limit: 100,
-          )).length,
+          (await repo.searchFoods(category: 'Produce', limit: 100)).length,
           100,
         );
         expect(

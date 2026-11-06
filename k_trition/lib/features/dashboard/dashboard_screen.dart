@@ -26,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static const _waterChoices = [8, 16, 24, 32];
 
   final _foodNameController = TextEditingController();
+  final _foodResultsController = ScrollController();
   final _servingController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _waterController = TextEditingController();
@@ -40,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double _totalCalories = 0;
   double _waterAmount = 0;
   Food? _selectedFood;
+  String? _foodCategory;
   Timer? _foodSearchTimer;
   int _refreshRequest = 0;
   int _foodSearchRequest = 0;
@@ -67,6 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     _foodNameController.dispose();
+    _foodResultsController.dispose();
     _servingController.dispose();
     _caloriesController.dispose();
     _waterController.dispose();
@@ -180,13 +183,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _onFoodSearchChanged(String query) {
     _foodSearchTimer?.cancel();
+    // Ignore results from an older query if the user keeps typing.
     final request = ++_foodSearchRequest;
     if (_selectedFood != null && query.trim() != _selectedFood!.name) {
       _selectedFood = null;
       _caloriesController.clear();
     }
     final trimmed = query.trim();
-    if (trimmed.length < 2) {
+    if (trimmed.length < 2 && _foodCategory == null) {
       setState(() {
         _foodSuggestions.clear();
         _isSearchingFoods = false;
@@ -201,10 +205,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
     _foodSearchTimer = Timer(const Duration(milliseconds: 250), () async {
       try {
-        final foods = await widget.repository.searchFoods(
-          query: trimmed,
-          limit: 6,
-        );
+        // Repository pages are capped at 100; collect all matching choices.
+        // The bounded ListView below only builds rows as they become visible.
+        final foods = <Food>[];
+        while (true) {
+          final page = await widget.repository.searchFoods(
+            query: trimmed,
+            category: _foodCategory,
+            limit: 100,
+            offset: foods.length,
+          );
+          if (!mounted || request != _foodSearchRequest) return;
+          foods.addAll(page);
+          if (page.length < 100) break;
+        }
         if (!mounted || request != _foodSearchRequest) return;
         setState(() {
           _foodSuggestions
@@ -229,7 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _foodSuggestions.clear();
       _foodSearchError = null;
       _isSearchingFoods = false;
-      _servingController.text = '100';
+      _servingController.text = food.fdcId == wheyShakeFoodId ? '270' : '100';
       _updateCalculatedCalories();
     });
   }
@@ -506,6 +520,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildFoodForm() => _SectionPanel(
     child: Column(
       children: [
+        DropdownButtonFormField<String>(
+          initialValue: 'All foods',
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Food category',
+            isDense: true,
+          ),
+          items:
+              const [
+                    'All foods',
+                    'Proteins',
+                    'Produce',
+                    'Grains & Carbs',
+                    'Dairy & Fats',
+                    'Common Mixed/Prepared Items',
+                  ]
+                  .map(
+                    (label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label, style: const TextStyle(fontSize: 11)),
+                    ),
+                  )
+                  .toList(),
+          onChanged: (value) {
+            setState(() => _foodCategory = value == 'All foods' ? null : value);
+            _onFoodSearchChanged(_foodNameController.text);
+          },
+        ),
+        const SizedBox(height: 8),
         _inputField(
           controller: _foodNameController,
           hint: 'Type a food name',
@@ -592,6 +635,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ),
   );
 
+  // Keep user-facing names short while showing the nutrition preparation.
+  String _foodBaseline(Food food) {
+    final source = food.sourceName.toLowerCase();
+    for (final state in [
+      'roasted',
+      'grilled',
+      'baked',
+      'hard-boiled',
+      'braised',
+      'boiled',
+      'cooked',
+      'raw',
+      'canned',
+      'dried',
+    ]) {
+      if (RegExp('\\b$state\\b').hasMatch(source)) return state;
+    }
+    if (food.fdcId == wheyShakeFoodId) return '30 g powder + 240 g water';
+    return 'standard serving';
+  }
+
   Widget _buildFoodSuggestions() {
     final message =
         _foodSearchError ??
@@ -621,27 +685,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
           borderRadius: BorderRadius.circular(8),
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          children: [
-            for (var index = 0; index < _foodSuggestions.length; index++) ...[
-              ListTile(
-                dense: true,
-                visualDensity: VisualDensity.compact,
-                title: Text(
-                  _foodSuggestions[index].name,
-                  style: const TextStyle(fontSize: 11, color: _ink),
-                ),
-                subtitle: Text(
-                  '${_foodSuggestions[index].category} · '
-                  '${(_foodSuggestions[index].kcalPerG * 100).round()} Cal / 100 g',
-                  style: const TextStyle(fontSize: 9, color: _muted),
-                ),
-                onTap: () => _selectFood(_foodSuggestions[index]),
-              ),
-              if (index < _foodSuggestions.length - 1)
-                const Divider(height: 1, indent: 8, endIndent: 8),
-            ],
-          ],
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 240),
+          child: Scrollbar(
+            controller: _foodResultsController,
+            child: ListView.separated(
+              controller: _foodResultsController,
+              key: ValueKey(_foodNameController.text.trim()),
+              primary: false,
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+              itemCount: _foodSuggestions.length,
+              separatorBuilder: (_, _) =>
+                  const Divider(height: 1, indent: 8, endIndent: 8),
+              itemBuilder: (context, index) {
+                final food = _foodSuggestions[index];
+                return ListTile(
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                  title: Text(
+                    food.name,
+                    style: const TextStyle(fontSize: 11, color: _ink),
+                  ),
+                  subtitle: Text(
+                    '${food.category} · '
+                    '${(food.kcalPerG * 100).round()} Cal / 100 g\n'
+                    'Baseline: ${_foodBaseline(food)}',
+                    style: const TextStyle(fontSize: 9, color: _muted),
+                  ),
+                  onTap: () => _selectFood(food),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );

@@ -38,6 +38,7 @@ class AppDatabase extends _$AppDatabase {
     final catalog = jsonDecode(
       await rootBundle.loadString('assets/data/foods.json'),
     ) as Map<String, dynamic>;
+    // Catalog versions change independently of the SQLite table schema.
     final version = catalog['catalog_version'] as int;
     final current = await customSelect(
       'SELECT version FROM catalog_state LIMIT 1',
