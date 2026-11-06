@@ -236,9 +236,15 @@ class NutritionRepository {
     required double calories,
     required double waterOunces,
     required DateTime effectiveDate,
+    double? proteinGrams,
+    double? carbsGrams,
+    double? fatGrams,
   }) async {
     positive(calories, 'Calorie goal');
     positive(waterOunces, 'Water goal');
+    if (proteinGrams != null) positive(proteinGrams, 'Protein goal');
+    if (carbsGrams != null) positive(carbsGrams, 'Carbohydrate goal');
+    if (fatGrams != null) positive(fatGrams, 'Fat goal');
     await database
         .into(database.goals)
         .insertOnConflictUpdate(
@@ -246,6 +252,9 @@ class NutritionRepository {
             effectiveDate: dayKey(effectiveDate),
             calories: calories,
             waterOunces: waterOunces,
+            proteinGrams: Value(proteinGrams),
+            carbsGrams: Value(carbsGrams),
+            fatGrams: Value(fatGrams),
           ),
         );
   }
@@ -264,7 +273,10 @@ SELECT COALESCE(SUM(i.grams*i.kcal_per_g),0.0) AS calories,
  COALESCE(SUM(i.grams*i.fat_per_g),0.0) AS fat,
  (SELECT COALESCE(SUM(ounces),0.0) FROM water_entries WHERE logged_at>=?1 AND logged_at<?2) AS water,
  (SELECT calories FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS calorie_goal,
- (SELECT water_ounces FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS water_goal
+ (SELECT water_ounces FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS water_goal,
+ (SELECT protein_grams FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS protein_goal,
+ (SELECT carbs_grams FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS carbs_goal,
+ (SELECT fat_grams FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS fat_goal
 FROM meal_items i JOIN meals m ON m.id=i.meal_id WHERE m.logged_at>=?1 AND m.logged_at<?2
 ''',
     variables: [
@@ -290,6 +302,9 @@ FROM meal_items i JOIN meals m ON m.id=i.meal_id WHERE m.logged_at>=?1 AND m.log
     waterOunces: row.read<double>('water'),
     calorieGoal: row.readNullable<double>('calorie_goal'),
     waterGoalOunces: row.readNullable<double>('water_goal'),
+    proteinGoalGrams: row.readNullable<double>('protein_goal'),
+    carbsGoalGrams: row.readNullable<double>('carbs_goal'),
+    fatGoalGrams: row.readNullable<double>('fat_goal'),
   );
   Future<DailyProgress> progressForDay(DateTime day) async =>
       _progress(day, await _progressQuery(day).getSingle());

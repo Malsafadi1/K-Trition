@@ -49,6 +49,9 @@ class DailyProgress {
     required this.waterOunces,
     required this.calorieGoal,
     required this.waterGoalOunces,
+    required this.proteinGoalGrams,
+    required this.carbsGoalGrams,
+    required this.fatGoalGrams,
   });
   final DateTime day;
   final NutritionTotals nutrition;
@@ -56,6 +59,7 @@ class DailyProgress {
 
   /// No invented targets: null until the user sets an effective goal.
   final double? calorieGoal, waterGoalOunces;
+  final double? proteinGoalGrams, carbsGoalGrams, fatGoalGrams;
   double? get calorieFraction =>
       calorieGoal == null ? null : nutrition.calories / calorieGoal!;
   double? get waterFraction =>

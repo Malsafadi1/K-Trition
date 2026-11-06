@@ -31,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _caloriesController = TextEditingController();
   final _waterController = TextEditingController();
   final List<_FoodEntry> _foodEntries = [];
+  final List<_PendingFoodPortion> _pendingFoodItems = [];
   final List<_WaterEntry> _waterEntries = [];
   final List<_FoodEntry> _historyFoodEntries = [];
   final List<_WaterEntry> _historyWaterEntries = [];
@@ -39,7 +40,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _goalCalories = 2000;
   int _goalWater = 64;
   double _totalCalories = 0;
+  double _totalProtein = 0;
+  double _totalCarbs = 0;
+  double _totalFat = 0;
   double _waterAmount = 0;
+  int? _goalProtein;
+  int? _goalCarbs;
+  int? _goalFat;
   Food? _selectedFood;
   String? _foodCategory;
   Timer? _foodSearchTimer;
@@ -59,6 +66,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<_FoodEntry> get _selectedFoodEntries => _historyFoodEntries;
 
   List<_WaterEntry> get _selectedWaterEntries => _historyWaterEntries;
+
+  double? get _currentServingGrams {
+    final grams = double.tryParse(_servingController.text.trim());
+    if (grams == null || !grams.isFinite || grams <= 0 || grams >= 1000000000) {
+      return null;
+    }
+    return grams;
+  }
+
+  NutritionTotals? get _currentNutrition {
+    final food = _selectedFood;
+    final grams = _currentServingGrams;
+    return food == null || grams == null
+        ? null
+        : widget.repository.calculate(food, grams);
+  }
 
   @override
   void initState() {
@@ -137,9 +160,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ..clear()
           ..addAll(historyWaters);
         _totalCalories = progress.nutrition.calories;
+        _totalProtein = progress.nutrition.protein;
+        _totalCarbs = progress.nutrition.carbs;
+        _totalFat = progress.nutrition.fat;
         _waterAmount = progress.waterOunces;
         _goalCalories = (progress.calorieGoal ?? 2000).round();
         _goalWater = (progress.waterGoalOunces ?? 64).round();
+        _goalProtein = progress.proteinGoalGrams?.round();
+        _goalCarbs = progress.carbsGoalGrams?.round();
+        _goalFat = progress.fatGoalGrams?.round();
         _loadError = null;
       });
     } catch (error) {
@@ -249,17 +278,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _updateCalculatedCalories() {
-    final food = _selectedFood;
-    final grams = double.tryParse(_servingController.text.trim());
-    if (food == null || grams == null || grams <= 0 || !grams.isFinite) {
-      _caloriesController.clear();
-      return;
-    }
-    _caloriesController.text = widget.repository
-        .calculate(food, grams)
-        .calories
-        .round()
-        .toString();
+    final nutrition = _currentNutrition;
+    _caloriesController.text = nutrition?.calories.round().toString() ?? '';
   }
 
   @override
@@ -397,6 +417,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          _macroGoalProgress('Protein', _totalProtein, _goalProtein),
+          _macroGoalProgress('Carbs', _totalCarbs, _goalCarbs),
+          _macroGoalProgress('Fat', _totalFat, _goalFat),
+        ],
+      ),
       const SizedBox(height: 10),
       OutlinedButton.icon(
         onPressed: _editGoals,
@@ -442,6 +470,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final formKey = GlobalKey<FormState>();
     var caloriesGoal = _goalCalories;
     var waterGoal = _goalWater;
+    int? proteinGoal = _goalProtein;
+    int? carbsGoal = _goalCarbs;
+    int? fatGoal = _goalFat;
 
     String? validateGoal(String? value, String label) {
       final goal = int.tryParse(value?.trim() ?? '');
@@ -451,55 +482,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return null;
     }
 
-    final goals = await showDialog<(int, int)>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit daily goals'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                initialValue: _goalCalories.toString(),
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Calories (Cal)'),
-                validator: (value) => validateGoal(value, 'Calorie goal'),
-                onSaved: (value) => caloriesGoal = int.parse(value!.trim()),
+    String? validateMacroGoal(String? value, String label) {
+      if (value == null || value.trim().isEmpty) return null;
+      final goal = int.tryParse(value.trim());
+      if (goal == null || goal <= 0) {
+        return '$label must be a whole number greater than zero, or left blank.';
+      }
+      return null;
+    }
+
+    int? parseMacroGoal(String? value) {
+      final trimmed = value?.trim() ?? '';
+      return trimmed.isEmpty ? null : int.parse(trimmed);
+    }
+
+    final goals =
+        await showDialog<
+          ({int calories, int water, int? protein, int? carbs, int? fat})
+        >(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Edit daily goals'),
+            scrollable: true,
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    initialValue: _goalCalories.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Calories (Cal)',
+                    ),
+                    validator: (value) => validateGoal(value, 'Calorie goal'),
+                    onSaved: (value) => caloriesGoal = int.parse(value!.trim()),
+                  ),
+                  TextFormField(
+                    initialValue: _goalWater.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Water (Oz)'),
+                    validator: (value) => validateGoal(value, 'Water goal'),
+                    onSaved: (value) => waterGoal = int.parse(value!.trim()),
+                  ),
+                  TextFormField(
+                    initialValue: _goalProtein?.toString() ?? '',
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Protein (g)',
+                      hintText: 'Optional',
+                    ),
+                    validator: (value) =>
+                        validateMacroGoal(value, 'Protein goal'),
+                    onSaved: (value) => proteinGoal = parseMacroGoal(value),
+                  ),
+                  TextFormField(
+                    initialValue: _goalCarbs?.toString() ?? '',
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Carbs (g)',
+                      hintText: 'Optional',
+                    ),
+                    validator: (value) =>
+                        validateMacroGoal(value, 'Carbohydrate goal'),
+                    onSaved: (value) => carbsGoal = parseMacroGoal(value),
+                  ),
+                  TextFormField(
+                    initialValue: _goalFat?.toString() ?? '',
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Fat (g)',
+                      hintText: 'Optional',
+                    ),
+                    validator: (value) => validateMacroGoal(value, 'Fat goal'),
+                    onSaved: (value) => fatGoal = parseMacroGoal(value),
+                  ),
+                ],
               ),
-              TextFormField(
-                initialValue: _goalWater.toString(),
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Water (Oz)'),
-                validator: (value) => validateGoal(value, 'Water goal'),
-                onSaved: (value) => waterGoal = int.parse(value!.trim()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    formKey.currentState!.save();
+                    Navigator.of(dialogContext).pop((
+                      calories: caloriesGoal,
+                      water: waterGoal,
+                      protein: proteinGoal,
+                      carbs: carbsGoal,
+                      fat: fatGoal,
+                    ));
+                  }
+                },
+                child: const Text('Save'),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                formKey.currentState!.save();
-                Navigator.of(dialogContext).pop((caloriesGoal, waterGoal));
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+        );
 
     if (goals == null || !mounted) return;
     try {
       await widget.repository.setGoals(
-        calories: goals.$1.toDouble(),
-        waterOunces: goals.$2.toDouble(),
+        calories: goals.calories.toDouble(),
+        waterOunces: goals.water.toDouble(),
+        proteinGrams: goals.protein?.toDouble(),
+        carbsGrams: goals.carbs?.toDouble(),
+        fatGrams: goals.fat?.toDouble(),
         effectiveDate: _selectedDate,
       );
       await _refreshData();
@@ -507,6 +599,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted) _showMessage('Could not save goals: $error');
     }
   }
+
+  Widget _macroGoalProgress(
+    String label,
+    double current,
+    int? goal,
+  ) => Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: _muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '${_formatNumber(current)} / ${goal == null ? '—' : _formatNumber(goal)} g',
+            maxLines: 1,
+            style: const TextStyle(color: _ink, fontSize: 10),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _sectionLabel(String label) => Text(
     label,
@@ -549,6 +669,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         ),
         const SizedBox(height: 8),
+        if (_pendingFoodItems.isNotEmpty) ...[
+          for (var index = 0; index < _pendingFoodItems.length; index++)
+            _buildPendingFoodItem(index),
+          const SizedBox(height: 8),
+        ],
         _inputField(
           controller: _foodNameController,
           hint: 'Type a food name',
@@ -583,6 +708,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
+        if (_currentNutrition case final nutrition?) ...[
+          const SizedBox(height: 7),
+          _buildNutritionSummary(nutrition, includeCalories: false),
+        ],
+        if (_selectedFood != null) ...[
+          const SizedBox(height: 7),
+          SizedBox(
+            width: double.infinity,
+            height: 34,
+            child: OutlinedButton.icon(
+              onPressed: _isSaving ? null : _addAnotherFood,
+              icon: const Icon(Icons.add, size: 15),
+              label: const Text(
+                'Add another item',
+                style: TextStyle(fontSize: 11),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _orange,
+                side: const BorderSide(color: _orange),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 7),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -628,7 +779,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 borderRadius: BorderRadius.circular(9),
               ),
             ),
-            child: const Text('Add Food', style: TextStyle(fontSize: 12)),
+            child: Text(
+              _pendingFoodItems.isEmpty ? 'Add Food' : 'Save Meal',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildPendingFoodItem(int index) {
+    final item = _pendingFoodItems[index];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _border),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${item.food.name} · ${_formatAmount(item.grams)} g',
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Remove ${item.food.name}',
+                onPressed: _isSaving
+                    ? null
+                    : () => setState(() => _pendingFoodItems.removeAt(index)),
+                icon: const Icon(Icons.close, size: 16),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(
+                  width: 28,
+                  height: 28,
+                ),
+              ),
+            ],
+          ),
+          _buildNutritionSummary(
+            item.nutrition,
+            title: 'Macros',
+            includeCalories: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionSummary(
+    NutritionTotals nutrition, {
+    String title = 'Macros for this serving',
+    bool includeCalories = false,
+  }) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: _border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: const TextStyle(color: _muted, fontSize: 9)),
+        const SizedBox(height: 5),
+        Row(
+          children: [
+            if (includeCalories)
+              _macroValue('Energy', nutrition.calories, 'Cal'),
+            _macroValue('Protein', nutrition.protein, 'g'),
+            _macroValue('Carbs', nutrition.carbs, 'g'),
+            _macroValue('Fat', nutrition.fat, 'g'),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Widget _macroValue(String label, double value, String unit) => Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: _muted, fontSize: 9)),
+        Text(
+          '${_formatNumber(value)} $unit',
+          style: const TextStyle(
+            color: _ink,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -1336,19 +1587,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
   static String _formatAmount(double amount) =>
       amount == amount.roundToDouble() ? amount.round().toString() : '$amount';
 
-  Future<void> _addFood() async {
+  bool _validateCurrentFood() {
     final name = _foodNameController.text.trim();
     final food = _selectedFood;
-    final servingText = _servingController.text.trim();
-    final servingGrams = servingText.isEmpty
-        ? null
-        : double.tryParse(servingText);
     if (food == null || name != food.name) {
+      _showMessage('Choose a food from the database suggestions.');
+      return false;
+    }
+    if (_currentServingGrams == null) {
+      _showMessage('Enter a valid serving size in grams.');
+      return false;
+    }
+    return true;
+  }
+
+  void _addAnotherFood() {
+    if (!_validateCurrentFood()) return;
+    if (_pendingFoodItems.length >= 49) {
+      _showMessage('A meal can contain at most 50 food items.');
+      return;
+    }
+    final food = _selectedFood!;
+    final grams = _currentServingGrams!;
+    setState(() {
+      _pendingFoodItems.add(
+        _PendingFoodPortion(
+          food: food,
+          grams: grams,
+          nutrition: widget.repository.calculate(food, grams),
+        ),
+      );
+      _foodNameController.clear();
+      _servingController.clear();
+      _caloriesController.clear();
+      _selectedFood = null;
+      _foodSuggestions.clear();
+      _foodSearchError = null;
+      _isSearchingFoods = false;
+    });
+  }
+
+  Future<void> _addFood() async {
+    final hasCurrentFood =
+        _selectedFood != null || _foodNameController.text.trim().isNotEmpty;
+    if (hasCurrentFood && !_validateCurrentFood()) return;
+    if (_pendingFoodItems.isEmpty && !hasCurrentFood) {
       _showMessage('Choose a food from the database suggestions.');
       return;
     }
-    if (servingGrams == null || !servingGrams.isFinite || servingGrams <= 0) {
-      _showMessage('Enter a valid serving size in grams.');
+
+    final portions = [
+      for (final item in _pendingFoodItems)
+        MealPortion(foodId: item.food.fdcId, grams: item.grams),
+      if (_selectedFood != null)
+        MealPortion(foodId: _selectedFood!.fdcId, grams: _currentServingGrams!),
+    ];
+    if (portions.length > 50) {
+      _showMessage('A meal can contain at most 50 food items.');
       return;
     }
 
@@ -1363,10 +1658,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() => _isSaving = true);
     try {
       await widget.repository.saveMeal(
-        name: name,
+        name: _pendingFoodItems.isEmpty
+            ? _selectedFood!.name
+            : _pendingFoodItems.first.food.name,
         mealType: _selectedMeal,
         loggedAt: loggedAt,
-        portions: [MealPortion(foodId: food.fdcId, grams: servingGrams)],
+        portions: portions,
       );
       if (!mounted) return;
       setState(() {
@@ -1374,7 +1671,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _servingController.clear();
         _caloriesController.clear();
         _selectedFood = null;
+        _pendingFoodItems.clear();
         _foodSuggestions.clear();
+        _foodSearchError = null;
+        _isSearchingFoods = false;
         _showAllFood = false;
       });
       FocusScope.of(context).unfocus();
@@ -1635,6 +1935,18 @@ class _FoodEntry {
   final double calories;
   final double servingGrams;
   final DateTime loggedAt;
+}
+
+class _PendingFoodPortion {
+  const _PendingFoodPortion({
+    required this.food,
+    required this.grams,
+    required this.nutrition,
+  });
+
+  final Food food;
+  final double grams;
+  final NutritionTotals nutrition;
 }
 
 class _WaterEntry {

@@ -107,10 +107,16 @@ void main() {
       tester.widget<TextField>(find.byType(TextField).at(2)).controller!.text,
       '78',
     );
-    await tester.ensureVisible(find.text('Add Food'));
+    await tester.drag(_homeScroll(), const Offset(0, -150));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Add Food'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(
+      find.text('Apple - 150 g'),
+      200,
+      scrollable: _homeScroll(),
+    );
     expect(find.text('Apple - 150 g'), findsOneWidget);
     expect(find.text('78 Cal'), findsWidgets);
     await tester.runAsync(() async {
@@ -143,6 +149,50 @@ void main() {
     expect(find.text('78 Cal'), findsWidgets);
   });
 
+  testWidgets('food form can add multiple items and show their macros', (
+    tester,
+  ) async {
+    final repository = await _pumpApp(tester);
+
+    expect(find.text('Add another item'), findsNothing);
+    await tester.enterText(find.byType(TextField).at(0), 'Apple');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apple').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Protein'), findsWidgets);
+    expect(find.text('Carbs'), findsWidgets);
+    expect(find.text('Fat'), findsWidgets);
+    expect(find.text('Add another item'), findsOneWidget);
+    await tester.ensureVisible(find.text('Add another item'));
+    await tester.tap(find.text('Add another item'));
+    await tester.pumpAndSettle();
+    expect(find.text('Apple · 100 g'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField).at(0), 'Banana');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Banana').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save Meal'));
+    await tester.tap(find.text('Save Meal'));
+    await tester.pumpAndSettle();
+
+    await tester.runAsync(() async {
+      final meals = await repository.mealsForDay(DateTime.now());
+      expect(meals, hasLength(1));
+      final items = await repository.getMealItems(meals.single.id);
+      expect(items.map((item) => item.foodName), ['Apple', 'Banana']);
+    });
+  });
+
   testWidgets('daily goals can be edited and reject non-positive values', (
     tester,
   ) async {
@@ -160,15 +210,24 @@ void main() {
 
     await tester.enterText(find.byType(TextFormField).at(0), '2500');
     await tester.enterText(find.byType(TextFormField).at(1), '80');
+    await tester.enterText(find.byType(TextFormField).at(2), '140');
+    await tester.enterText(find.byType(TextFormField).at(3), '250');
+    await tester.enterText(find.byType(TextFormField).at(4), '70');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     expect(find.text('/ 2,500 Cal'), findsOneWidget);
     expect(find.text('/ 80 Oz'), findsOneWidget);
+    expect(find.text('0 / 140 g'), findsOneWidget);
+    expect(find.text('0 / 250 g'), findsOneWidget);
+    expect(find.text('0 / 70 g'), findsOneWidget);
     final goal = await tester.runAsync(
       () => repository.goalsForDay(DateTime.now()),
     );
     expect(goal?.calories, 2500);
+    expect(goal?.proteinGrams, 140);
+    expect(goal?.carbsGrams, 250);
+    expect(goal?.fatGrams, 70);
   });
 
   testWidgets('history starts empty and switches between date ranges', (

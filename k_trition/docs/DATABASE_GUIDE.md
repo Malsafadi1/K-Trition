@@ -42,10 +42,10 @@ See [catalog maintenance](../tool/FOOD_CLEANUP.md) for rebuilding and source ext
 | meals | id, name, meal_type, logged_at |
 | meal_items | id, meal_id, food_id, food_name, grams, saved per-gram nutrients |
 | water_entries | id, ounces, logged_at |
-| goals | effective_date, calories, water_ounces |
+| goals | effective_date, calories, water_ounces, optional protein/carbs/fat gram targets |
 | catalog_state | Imported catalog version (internal) |
 
-Food quantities are **edible grams** matching the listed preparation. Water is stored/displayed in **US fluid ounces**, not weight ounces. Timestamps are epoch **milliseconds**; use `DateTime.fromMillisecondsSinceEpoch(value)` for display. Goals use a local `YYYY-MM-DD` effective date. Null goals mean the user has not set a target yet.
+Food quantities are **edible grams** matching the listed preparation. Water is stored/displayed in **US fluid ounces**, not weight ounces. Timestamps are epoch **milliseconds**; use `DateTime.fromMillisecondsSinceEpoch(value)` for display. Goals use a local `YYYY-MM-DD` effective date. Null macro goals mean the user has not set a target yet.
 
 A meal can contain multiple meal items. Deleting a meal cascades to its items. Saves/edits are transactional: failure leaves the original entry intact. Food nutrition is snapshotted into each meal item; existing food snapshots are preserved during edits even if catalog nutrition later changes. Adding a new food uses its current catalog values.
 
@@ -101,7 +101,12 @@ final water = await repository.waterForDay(DateTime.now());
 await repository.deleteWater(waterId);
 
 await repository.setGoals(
-  calories: 2000, waterOunces: 64, effectiveDate: DateTime.now(),
+  calories: 2000,
+  waterOunces: 64,
+  proteinGrams: 140,
+  carbsGrams: 250,
+  fatGrams: 70,
+  effectiveDate: DateTime.now(),
 ); // Example values only: users should choose their own targets.
 final progress = await repository.progressForDay(DateTime.now());
 final history = await repository.progressForRange(
@@ -118,6 +123,7 @@ final stream = repository.watchDailyProgress(selectedDate);
 // Future UI: use StreamBuilder<DailyProgress>(stream: stream, ...).
 // progress.nutrition.calories / protein / carbs / fat
 // progress.waterOunces, calorieGoal, waterGoalOunces
+// progress.proteinGoalGrams, carbsGoalGrams, fatGoalGrams
 ```
 
 `watchMeals(day)` and `watchWater(day)` also update after changes. Streams respond to edits/deletions and goal changes; totals are derived, not stored separately. Goal history uses the last effective date on or before the requested day. A new target does not rewrite earlier days.

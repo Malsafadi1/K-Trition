@@ -39,6 +39,9 @@ CREATE INDEX water_date ON water_entries(logged_at);
 CREATE TABLE goals (
   effective_date TEXT NOT NULL PRIMARY KEY,
   calories REAL NOT NULL CHECK(calories > 0),
-  water_ounces REAL NOT NULL CHECK(water_ounces > 0)
+  water_ounces REAL NOT NULL CHECK(water_ounces > 0),
+  protein_grams REAL,
+  carbs_grams REAL,
+  fat_grams REAL
 );
 CREATE TABLE catalog_state (version INTEGER NOT NULL PRIMARY KEY);
