@@ -167,9 +167,14 @@ void main() {
     expect(find.text('Protein'), findsWidgets);
     expect(find.text('Carbs'), findsWidgets);
     expect(find.text('Fat'), findsWidgets);
-    expect(find.text('Add another item'), findsOneWidget);
-    await tester.ensureVisible(find.text('Add another item'));
-    await tester.tap(find.text('Add another item'));
+    final addAnotherButton = find.widgetWithText(
+      OutlinedButton,
+      'Add another item',
+    );
+    expect(addAnotherButton, findsOneWidget);
+    await tester.ensureVisible(addAnotherButton);
+    await tester.pumpAndSettle();
+    await tester.tap(addAnotherButton);
     await tester.pumpAndSettle();
     expect(find.text('Apple · 100 g'), findsOneWidget);
 
