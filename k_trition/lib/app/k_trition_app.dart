@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../data/nutrition_repository.dart';
 import '../features/dashboard/dashboard_screen.dart';
 
 class KTritionApp extends StatelessWidget {
-  const KTritionApp({super.key});
+  const KTritionApp({required this.repository, super.key});
+
+  final NutritionRepository repository;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -13,6 +16,6 @@ class KTritionApp extends StatelessWidget {
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFD65A24)),
       useMaterial3: true,
     ),
-    home: const DashboardScreen(),
+    home: DashboardScreen(repository: repository),
   );
 }

@@ -2,7 +2,7 @@
 
 **Storage:** local SQLite through Drift. No Firebase account, server, API key, or cloud connection is needed.
 
-The app currently has a working dashboard prototype for food and water logging, goals, and history. That screen keeps its data in memory and does not use this database yet. This guide describes the separate, implemented database API; connecting it to the dashboard is still work to do. See [Current features and next steps](MVP.md).
+The dashboard uses this database for food search, nutrition calculations, meal and water logs, goals, and history. Data stays on the device.
 
 ## Catalog scope
 
@@ -64,7 +64,7 @@ final repository = await NutritionRepository.open();
 // await repository.close();
 ```
 
-Do not open a new database on every widget build. The current `main.dart` does not open the repository yet, so the dashboard's prototype logs and goals are not saved to SQLite.
+Do not open a new database on every widget build. `main.dart` opens the repository once and passes it to the dashboard.
 
 ## Food selection and quantity previews
 

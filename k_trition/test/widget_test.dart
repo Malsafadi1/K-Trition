@@ -1,12 +1,16 @@
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:k_trition/app/k_trition_app.dart';
+import 'package:k_trition/data/nutrition_repository.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   testWidgets('home starts with empty logs and displays the requested units', (
     tester,
   ) async {
-    await tester.pumpWidget(const KTritionApp());
+    await _pumpApp(tester);
 
     expect(find.text('K-Trition'), findsOneWidget);
     expect(find.text('Calories'), findsOneWidget);
@@ -26,23 +30,40 @@ void main() {
   });
 
   testWidgets('food and water logging update daily totals', (tester) async {
-    await tester.pumpWidget(const KTritionApp());
+    final repository = await _pumpApp(tester);
 
     await tester.enterText(find.byType(TextField).at(0), 'Apple');
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 100)),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apple').last);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).at(2)).controller!.text,
+      '52',
+    );
     await tester.enterText(find.byType(TextField).at(1), '150');
-    await tester.enterText(find.byType(TextField).at(2), '100');
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(find.byType(TextField).at(2)).controller!.text,
+      '78',
+    );
     await tester.ensureVisible(find.text('Add Food'));
     await tester.tap(find.text('Add Food'));
     await tester.pumpAndSettle();
 
     expect(find.text('Apple - 150 g'), findsOneWidget);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is RichText && widget.text.toPlainText().contains('100'),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('78 Cal'), findsWidgets);
+    await tester.runAsync(() async {
+      final meals = await repository.mealsForDay(DateTime.now());
+      expect(meals, hasLength(1));
+      expect(
+        (await repository.progressForDay(DateTime.now())).nutrition.calories,
+        closeTo(78, 1e-8),
+      );
+    });
 
     await tester.scrollUntilVisible(
       find.text('16 Oz'),
@@ -54,18 +75,21 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add Water'));
     await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      expect(await repository.waterForDay(DateTime.now()), hasLength(1));
+    });
 
     await tester.tap(find.text('History'));
     await tester.pumpAndSettle();
     expect(find.text('Apple - 150 g'), findsOneWidget);
     expect(find.text('16 Oz'), findsWidgets);
-    expect(find.text('100 Cal'), findsWidgets);
+    expect(find.text('78 Cal'), findsWidgets);
   });
 
   testWidgets('daily goals can be edited and reject non-positive values', (
     tester,
   ) async {
-    await tester.pumpWidget(const KTritionApp());
+    final repository = await _pumpApp(tester);
     await tester.tap(find.text('Edit Goals'));
     await tester.pumpAndSettle();
 
@@ -84,12 +108,16 @@ void main() {
 
     expect(find.text('/ 2,500 Cal'), findsOneWidget);
     expect(find.text('/ 80 Oz'), findsOneWidget);
+    final goal = await tester.runAsync(
+      () => repository.goalsForDay(DateTime.now()),
+    );
+    expect(goal?.calories, 2500);
   });
 
   testWidgets('history starts empty and switches between date ranges', (
     tester,
   ) async {
-    await tester.pumpWidget(const KTritionApp());
+    await _pumpApp(tester);
     await tester.tap(find.text('History'));
     await tester.pumpAndSettle();
 
@@ -104,6 +132,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('No food logged for this period.'), findsOneWidget);
   });
+}
+
+Future<NutritionRepository> _pumpApp(WidgetTester tester) async {
+  final repository = await tester.runAsync(
+    () => NutritionRepository.open(executor: NativeDatabase.memory()),
+  );
+  if (repository == null) {
+    throw StateError('The widget test repository did not initialize.');
+  }
+  addTearDown(repository.close);
+  await tester.pumpWidget(KTritionApp(repository: repository));
+  await tester.pumpAndSettle();
+  return repository;
 }
 
 Finder _homeScroll() => find
