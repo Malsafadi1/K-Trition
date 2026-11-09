@@ -4,7 +4,10 @@ Group Flutter nutrition tracker for Kalamazoo College students.
 
 ## Current state
 
-A complete local SQLite/Drift data layer is ready for UI integration. The existing UI intentionally remains the MVP roadmap.
+A complete local SQLite/Drift data layer is available for meal, water and goal storage.
+
+- Settings includes a device-persisted light/dark appearance preference, a meal-history viewer for saved Drift meals, and a Help & Support FAQ.
+- The dashboard's current quick-add food and water entries remain session-only; they are not yet written to the Drift database and therefore do not appear in Meal History.
 
 - 5,084 USDA SR Legacy/Foundation foods from core food categories
 - 44 common choices with plain names, plus full paginated catalog search

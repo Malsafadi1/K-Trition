@@ -161,6 +161,66 @@ void main() {
       }
     },
   );
+  test(
+    'Meal history returns saved meals newest-first with snapshot totals',
+    () async {
+      final repo = await NutritionRepository.open(
+        executor: NativeDatabase.memory(),
+      );
+      try {
+        final food = await repo.getFood(171688);
+        expect(await repo.mealHistory(), isEmpty);
+        await repo.saveMeal(
+          name: 'Earlier meal',
+          mealType: 'Breakfast',
+          loggedAt: DateTime(2026, 10, 22, 8),
+          portions: [MealPortion(foodId: food.fdcId, grams: 100)],
+        );
+        await repo.saveMeal(
+          name: 'Later meal',
+          mealType: 'Dinner',
+          loggedAt: DateTime(2026, 10, 23, 19, 30),
+          portions: [MealPortion(foodId: food.fdcId, grams: 150)],
+        );
+
+        final history = await repo.mealHistory();
+        expect(history.map((entry) => entry.meal.name), [
+          'Later meal',
+          'Earlier meal',
+        ]);
+        expect(history.first.items, hasLength(1));
+        expect(history.first.nutrition.calories, closeTo(78, 1e-8));
+        expect(history.first.nutrition.protein, closeTo(.39, 1e-8));
+        expect(history.first.nutrition.carbs, closeTo(20.715, 1e-8));
+        expect(history.first.nutrition.fat, closeTo(.255, 1e-8));
+      } finally {
+        await repo.close();
+      }
+    },
+  );
+  test('Empty days still return zero totals and the latest goal', () async {
+    final repo = await NutritionRepository.open(
+      executor: NativeDatabase.memory(),
+    );
+    try {
+      final day = DateTime(2026, 3, 8);
+      await repo.setGoals(
+        calories: 2000,
+        waterOunces: 64,
+        effectiveDate: DateTime(2026, 3, 7),
+      );
+      final progress = await repo.progressForDay(day);
+      expect(progress.nutrition.calories, 0);
+      expect(progress.nutrition.protein, 0);
+      expect(progress.nutrition.carbs, 0);
+      expect(progress.nutrition.fat, 0);
+      expect(progress.waterOunces, 0);
+      expect(progress.calorieGoal, 2000);
+      expect(progress.waterGoalOunces, 64);
+    } finally {
+      await repo.close();
+    }
+  });
   test('Live progress emits when entries and goals change', () async {
     final repo = await NutritionRepository.open(
       executor: NativeDatabase.memory(),

@@ -5,6 +5,29 @@ import 'models.dart';
 export 'database.dart' show Food, Meal, MealItem, WaterEntry, Goal;
 export 'models.dart';
 
+class MealHistoryEntry {
+  MealHistoryEntry({required this.meal, required this.items});
+
+  final Meal meal;
+  final List<MealItem> items;
+
+  NutritionTotals get nutrition => NutritionTotals(
+    calories: items.fold(
+      0.0,
+      (total, item) => total + item.grams * item.kcalPerG,
+    ),
+    protein: items.fold(
+      0.0,
+      (total, item) => total + item.grams * item.proteinPerG,
+    ),
+    carbs: items.fold(
+      0.0,
+      (total, item) => total + item.grams * item.carbsPerG,
+    ),
+    fat: items.fold(0.0, (total, item) => total + item.grams * item.fatPerG),
+  );
+}
+
 /// Data-only API: no Firebase, sign-in, or UI dependencies.
 class NutritionRepository {
   NutritionRepository(this.database);
@@ -183,6 +206,30 @@ class NutritionRepository {
   Future<List<MealItem>> getMealItems(int id) => (database.select(
     database.mealItems,
   )..where((i) => i.mealId.equals(id))).get();
+
+  Future<List<MealHistoryEntry>> mealHistory() async {
+    final rows = await database.select(database.meals).join([
+      leftOuterJoin(
+        database.mealItems,
+        database.mealItems.mealId.equalsExp(database.meals.id),
+      ),
+    ]).get();
+    final history = <int, MealHistoryEntry>{};
+    for (final row in rows) {
+      final meal = row.readTable(database.meals);
+      final entry = history.putIfAbsent(
+        meal.id,
+        () => MealHistoryEntry(meal: meal, items: []),
+      );
+      final item = row.readTableOrNull(database.mealItems);
+      if (item != null) entry.items.add(item);
+    }
+    return history.values.toList()..sort((a, b) {
+      final byDate = b.meal.loggedAt.compareTo(a.meal.loggedAt);
+      return byDate != 0 ? byDate : b.meal.id.compareTo(a.meal.id);
+    });
+  }
+
   Future<int> saveWater({
     int? id,
     required double ounces,
@@ -199,6 +246,7 @@ class NutritionRepository {
             ),
           );
     }
+
     final n =
         await (database.update(
           database.waterEntries,
@@ -258,14 +306,38 @@ class NutritionRepository {
           .getSingleOrNull();
   Selectable<QueryRow> _progressQuery(DateTime day) => database.customSelect(
     '''
-SELECT COALESCE(SUM(i.grams*i.kcal_per_g),0.0) AS calories,
- COALESCE(SUM(i.grams*i.protein_per_g),0.0) AS protein,
- COALESCE(SUM(i.grams*i.carbs_per_g),0.0) AS carbs,
- COALESCE(SUM(i.grams*i.fat_per_g),0.0) AS fat,
- (SELECT COALESCE(SUM(ounces),0.0) FROM water_entries WHERE logged_at>=?1 AND logged_at<?2) AS water,
- (SELECT calories FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS calorie_goal,
- (SELECT water_ounces FROM goals WHERE effective_date<=?3 ORDER BY effective_date DESC LIMIT 1) AS water_goal
-FROM meal_items i JOIN meals m ON m.id=i.meal_id WHERE m.logged_at>=?1 AND m.logged_at<?2
+SELECT
+  COALESCE((
+    SELECT SUM(i.grams * i.kcal_per_g)
+    FROM meal_items i
+    JOIN meals m ON m.id = i.meal_id
+    WHERE m.logged_at >= ?1 AND m.logged_at < ?2
+  ), 0.0) AS calories,
+  COALESCE((
+    SELECT SUM(i.grams * i.protein_per_g)
+    FROM meal_items i
+    JOIN meals m ON m.id = i.meal_id
+    WHERE m.logged_at >= ?1 AND m.logged_at < ?2
+  ), 0.0) AS protein,
+  COALESCE((
+    SELECT SUM(i.grams * i.carbs_per_g)
+    FROM meal_items i
+    JOIN meals m ON m.id = i.meal_id
+    WHERE m.logged_at >= ?1 AND m.logged_at < ?2
+  ), 0.0) AS carbs,
+  COALESCE((
+    SELECT SUM(i.grams * i.fat_per_g)
+    FROM meal_items i
+    JOIN meals m ON m.id = i.meal_id
+    WHERE m.logged_at >= ?1 AND m.logged_at < ?2
+  ), 0.0) AS fat,
+  COALESCE((
+    SELECT SUM(ounces)
+    FROM water_entries
+    WHERE logged_at >= ?1 AND logged_at < ?2
+  ), 0.0) AS water,
+  (SELECT calories FROM goals WHERE effective_date <= ?3 ORDER BY effective_date DESC LIMIT 1) AS calorie_goal,
+  (SELECT water_ounces FROM goals WHERE effective_date <= ?3 ORDER BY effective_date DESC LIMIT 1) AS water_goal
 ''',
     variables: [
       Variable<int>(localDay(day).millisecondsSinceEpoch),

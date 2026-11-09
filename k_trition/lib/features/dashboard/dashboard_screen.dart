@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../data/nutrition_repository.dart';
+import '../settings/settings_page.dart';
+
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({
+    required this.onDarkModeChanged,
+    required this.repositoryLoader,
+    super.key,
+  });
+
+  final Future<void> Function(bool enabled) onDarkModeChanged;
+  final Future<NutritionRepository> Function() repositoryLoader;
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -9,15 +19,15 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   static const _orange = Color(0xFFF28C28);
-  static const _ink = Color(0xFF171717);
-  static const _muted = Color(0xFF707070);
-  static const _page = Colors.white;
-  static const _border = Color(0xFFE5E5E5);
-  static const _softAccent = Color(0xFFFFF1E3);
-  static const _panel = Color(0xFFF5F5F5);
-  static const _track = Color(0xFFECECEC);
   static const _mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
   static const _waterChoices = [8, 16, 24, 32];
+
+  Color get _ink => Theme.of(context).colorScheme.onSurface;
+  Color get _muted => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _page => Theme.of(context).colorScheme.surface;
+  Color get _border => Theme.of(context).colorScheme.outlineVariant;
+  Color get _softAccent => Theme.of(context).colorScheme.primaryContainer;
+  Color get _panel => Theme.of(context).colorScheme.surfaceContainerLow;
 
   final _foodNameController = TextEditingController();
   final _servingController = TextEditingController();
@@ -130,7 +140,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const Spacer(),
                   IconButton(
                     tooltip: 'Settings',
-                    onPressed: () => _showMessage('Settings are coming soon.'),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SettingsPage(
+                          isDarkMode:
+                              Theme.of(context).brightness == Brightness.dark,
+                          onDarkModeChanged: widget.onDarkModeChanged,
+                          repositoryLoader: widget.repositoryLoader,
+                        ),
+                      ),
+                    ),
                     icon: const Icon(Icons.settings_outlined),
                     color: _orange,
                   ),
@@ -148,7 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   Text(
                     '${_isToday ? 'Today, ' : ''}${_formatDate(_selectedDate)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: _ink,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -322,7 +341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _sectionLabel(String label) => Text(
     label,
-    style: const TextStyle(
+    style: TextStyle(
       color: _ink,
       fontSize: 14,
       fontWeight: FontWeight.w700,
@@ -375,7 +394,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
-                  backgroundColor: Colors.white,
+                  backgroundColor: _page,
                   selectedColor: _softAccent,
                   side: BorderSide(color: selected ? _orange : _border),
                   shape: RoundedRectangleBorder(
@@ -436,7 +455,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   }),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: selected ? _orange : _ink,
-                    backgroundColor: selected ? _softAccent : Colors.white,
+                    backgroundColor: selected ? _softAccent : _page,
                     side: BorderSide(color: selected ? _orange : _border),
                     padding: const EdgeInsets.symmetric(horizontal: 2),
                     minimumSize: const Size(0, 31),
@@ -489,21 +508,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     keyboardType: keyboardType,
     textCapitalization: textCapitalization,
     onChanged: onChanged,
-    style: const TextStyle(color: _ink, fontSize: 11),
+    style: TextStyle(color: _ink, fontSize: 11),
     decoration: InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: _muted, fontSize: 10),
+      hintStyle: TextStyle(color: _muted, fontSize: 10),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 9, vertical: 9),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: _page,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(7),
-        borderSide: const BorderSide(color: _border),
+        borderSide: BorderSide(color: _border),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(7),
-        borderSide: const BorderSide(color: _border),
+        borderSide: BorderSide(color: _border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(7),
@@ -518,7 +537,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ? selectedEntries
         : selectedEntries.take(limit).toList();
     if (entries.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 14),
         child: Text(
           'No food logged yet. Add your first meal above.',
@@ -529,7 +548,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _page,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _border),
       ),
@@ -555,7 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text(
                 entry.meal,
-                style: const TextStyle(
+                style: TextStyle(
                   color: _ink,
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -566,23 +585,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 entry.servingGrams == null
                     ? entry.name
                     : '${entry.name} - ${_formatGrams(entry.servingGrams!)} g',
-                style: const TextStyle(color: _ink, fontSize: 10),
+                style: TextStyle(color: _ink, fontSize: 10),
               ),
               if (showTime)
                 Text(
                   _formatTime(entry.loggedAt),
-                  style: const TextStyle(color: _muted, fontSize: 9),
+                  style: TextStyle(color: _muted, fontSize: 9),
                 ),
             ],
           ),
         ),
         Text(
           '${_formatNumber(entry.calories)} Cal',
-          style: const TextStyle(color: _ink, fontSize: 10),
+          style: TextStyle(color: _ink, fontSize: 10),
         ),
         PopupMenuButton<String>(
           tooltip: 'Food entry options',
-          icon: const Icon(Icons.more_horiz, size: 18, color: _muted),
+          icon: Icon(Icons.more_horiz, size: 18, color: _muted),
           padding: EdgeInsets.zero,
           onSelected: (action) {
             if (action == 'delete') {
@@ -600,7 +619,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildHistoryCalendar() => Container(
     padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: _page,
       border: Border.all(color: _border),
       borderRadius: BorderRadius.circular(12),
     ),
@@ -619,7 +638,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Center(
                 child: Text(
                   _calendarTitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: _ink,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -661,7 +680,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Text(
                     weekdays[index],
-                    style: const TextStyle(color: _muted, fontSize: 8),
+                    style: TextStyle(color: _muted, fontSize: 8),
                   ),
                   const SizedBox(height: 4),
                   CircleAvatar(
@@ -700,7 +719,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Center(
                     child: Text(
                       day,
-                      style: const TextStyle(color: _muted, fontSize: 8),
+                      style: TextStyle(color: _muted, fontSize: 8),
                     ),
                   ),
                 ),
@@ -751,7 +770,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Widget child,
   }) => Container(
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: _page,
       border: Border.all(color: _border),
       borderRadius: BorderRadius.circular(12),
     ),
@@ -763,7 +782,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   color: _ink,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -790,7 +809,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     padding: const EdgeInsets.fromLTRB(11, 8, 11, 12),
     child: Align(
       alignment: Alignment.centerLeft,
-      child: Text(message, style: const TextStyle(color: _muted, fontSize: 11)),
+      child: Text(message, style: TextStyle(color: _muted, fontSize: 11)),
     ),
   );
 
@@ -802,16 +821,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(width: 9),
         Text(
           '${entry.amountOz} Oz',
-          style: const TextStyle(color: _ink, fontSize: 10),
+          style: TextStyle(color: _ink, fontSize: 10),
         ),
         const Spacer(),
         Text(
           _formatTime(entry.loggedAt),
-          style: const TextStyle(color: _ink, fontSize: 10),
+          style: TextStyle(color: _ink, fontSize: 10),
         ),
         PopupMenuButton<String>(
           tooltip: 'Water entry options',
-          icon: const Icon(Icons.more_vert, size: 17, color: _muted),
+          icon: Icon(Icons.more_vert, size: 17, color: _muted),
           padding: EdgeInsets.zero,
           onSelected: (action) {
             if (action == 'delete') {
@@ -912,9 +931,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             backgroundColor: WidgetStateProperty.resolveWith(
               (states) =>
-                  states.contains(WidgetState.selected) ? Colors.white : _panel,
+                  states.contains(WidgetState.selected) ? _page : _panel,
             ),
-            side: const WidgetStatePropertyAll(BorderSide(color: _border)),
+            side: WidgetStatePropertyAll(BorderSide(color: _border)),
           ),
         ),
         const SizedBox(height: 10),
@@ -922,7 +941,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 14),
         Text(
           _historyTitle,
-          style: const TextStyle(
+          style: TextStyle(
             color: _ink,
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -969,7 +988,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildBottomNavigation() => BottomNavigationBar(
     currentIndex: _selectedTab,
     onTap: (index) => setState(() => _selectedTab = index),
-    backgroundColor: Colors.white,
+    backgroundColor: _page,
     selectedItemColor: _orange,
     unselectedItemColor: _muted,
     selectedFontSize: 10,
@@ -1192,8 +1211,8 @@ class _ProgressCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(10),
     decoration: BoxDecoration(
-      color: Colors.white,
-      border: Border.all(color: _DashboardScreenState._border),
+      color: Theme.of(context).colorScheme.surface,
+      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       borderRadius: BorderRadius.circular(13),
     ),
     child: Column(
@@ -1213,8 +1232,8 @@ class _ProgressCard extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
-                      color: _DashboardScreenState._muted,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 9,
                     ),
                   ),
@@ -1224,8 +1243,8 @@ class _ProgressCard extends StatelessWidget {
                     child: Text.rich(
                       TextSpan(
                         text: value,
-                        style: const TextStyle(
-                          color: _DashboardScreenState._ink,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1251,8 +1270,8 @@ class _ProgressCard extends StatelessWidget {
           alignment: Alignment.centerRight,
           child: Text(
             '/ ${_DashboardScreenState._formatNumber(goal)} $unit',
-            style: const TextStyle(
-              color: _DashboardScreenState._muted,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 9,
             ),
           ),
@@ -1263,7 +1282,9 @@ class _ProgressCard extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress.clamp(0, 1),
             minHeight: 5,
-            backgroundColor: _DashboardScreenState._track,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -1281,7 +1302,7 @@ class _SectionPanel extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(8),
     decoration: BoxDecoration(
-      color: _DashboardScreenState._panel,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(12),
     ),
     child: child,
