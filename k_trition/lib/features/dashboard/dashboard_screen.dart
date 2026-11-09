@@ -112,6 +112,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             name: item.foodName,
             servingGrams: item.grams,
             calories: item.grams * item.kcalPerG,
+            protein: item.grams * item.proteinPerG,
+            carbs: item.grams * item.carbsPerG,
+            fat: item.grams * item.fatPerG,
             loggedAt: loggedAt,
           ),
         );
@@ -385,6 +388,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return _selectedDate.year == now.year &&
         _selectedDate.month == now.month &&
         _selectedDate.day == now.day;
+  }
+
+  bool get _isFutureDate {
+    final now = DateTime.now();
+    return DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    ).isAfter(DateTime(now.year, now.month, now.day));
   }
 
   Widget _buildHomeContent() => ListView(
@@ -1133,6 +1145,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 '${entry.name} - ${_formatGrams(entry.servingGrams)} g',
                 style: const TextStyle(color: _ink, fontSize: 10),
               ),
+              Text(
+                'Protein ${_formatGrams(entry.protein)} g · '
+                'Carbs ${_formatGrams(entry.carbs)} g · '
+                'Fat ${_formatGrams(entry.fat)} g',
+                style: const TextStyle(color: _muted, fontSize: 9),
+              ),
               if (showTime)
                 Text(
                   _formatTime(entry.loggedAt),
@@ -1582,7 +1600,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   static String _formatGrams(double grams) =>
-      grams == grams.roundToDouble() ? grams.toInt().toString() : '$grams';
+      grams.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
 
   static String _formatAmount(double amount) =>
       amount == amount.roundToDouble() ? amount.round().toString() : '$amount';
@@ -1601,7 +1619,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return true;
   }
 
+  bool _validateMealDate() {
+    if (!_isFutureDate) return true;
+    _showMessage('please selected a valid date');
+    return false;
+  }
+
   void _addAnotherFood() {
+    if (!_validateMealDate()) return;
     if (!_validateCurrentFood()) return;
     if (_pendingFoodItems.length >= 49) {
       _showMessage('A meal can contain at most 50 food items.');
@@ -1628,6 +1653,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _addFood() async {
+    if (!_validateMealDate()) return;
     final hasCurrentFood =
         _selectedFood != null || _foodNameController.text.trim().isNotEmpty;
     if (hasCurrentFood && !_validateCurrentFood()) return;
@@ -1925,6 +1951,9 @@ class _FoodEntry {
     required this.meal,
     required this.name,
     required this.calories,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
     required this.loggedAt,
     required this.servingGrams,
   });
@@ -1933,6 +1962,9 @@ class _FoodEntry {
   final String meal;
   final String name;
   final double calories;
+  final double protein;
+  final double carbs;
+  final double fat;
   final double servingGrams;
   final DateTime loggedAt;
 }
