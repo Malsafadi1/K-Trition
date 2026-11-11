@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:k_trition/data/database.dart';
 import 'package:k_trition/data/nutrition_repository.dart';
 
 void main() {
@@ -15,10 +16,10 @@ void main() {
       );
       try {
         final all = await repo.database.select(repo.database.foods).get();
-        expect(all.length, 5084);
+        expect(all.length, 300);
         final foods = await repo.searchFoods(limit: 100, commonOnly: true);
-        expect(foods.length, 44);
-        expect(foods.map((f) => f.name.toLowerCase()).toSet().length, 44);
+        expect(foods.length, 42);
+        expect(foods.map((f) => f.name.toLowerCase()).toSet().length, 42);
         expect(
           foods.any(
             (f) => RegExp(
@@ -30,18 +31,14 @@ void main() {
         );
         expect(
           (await repo.searchFoods(
-            query: 'sirloin',
+            query: 'Beef steak',
             commonOnly: true,
           )).single.name,
-          'Sirloin steak (grilled)',
+          'Beef steak',
         );
         expect(
           await repo.getCategories(),
-          containsAll([
-            'Fruits and Fruit Juices',
-            'Beef Products',
-            'Vegetables and Vegetable Products',
-          ]),
+          containsAll(['Produce', 'Proteins', 'Grains & Carbs']),
         );
         final apple = (await repo.searchFoods(query: 'apple'))
             .firstWhere((f) => f.name == 'Apple');
@@ -51,10 +48,7 @@ void main() {
         expect(n.carbs, closeTo(20.715, 1e-8));
         expect(n.fat, closeTo(.255, 1e-8));
         expect(
-          (await repo.searchFoods(
-            category: 'Fruits and Fruit Juices',
-            limit: 100,
-          )).length,
+          (await repo.searchFoods(category: 'Produce', limit: 100)).length,
           100,
         );
         expect(
@@ -103,6 +97,9 @@ void main() {
         await repo.setGoals(
           calories: 2200,
           waterOunces: 72,
+          proteinGrams: 140,
+          carbsGrams: 250,
+          fatGrams: 70,
           effectiveDate: day,
         );
         expect(
@@ -146,6 +143,9 @@ void main() {
         expect((await repo.mealsForDay(day)).single.name, 'Edited lunch');
         expect((await repo.progressForDay(day)).waterOunces, 12);
         expect((await repo.progressForDay(day)).calorieGoal, 2200);
+        expect((await repo.progressForDay(day)).proteinGoalGrams, 140);
+        expect((await repo.progressForDay(day)).carbsGoalGrams, 250);
+        expect((await repo.progressForDay(day)).fatGoalGrams, 70);
         await repo.deleteMeal(id);
         expect(await repo.getMealItems(id), isEmpty);
         await repo.deleteWater(water);
@@ -219,6 +219,35 @@ void main() {
       expect(progress.waterGoalOunces, 64);
     } finally {
       await repo.close();
+    }
+  });
+  test('Existing goal records upgrade with unset macro targets', () async {
+    final dir = await Directory.systemTemp.createTemp('ktrition_migration_');
+    final file = File('${dir.path}/database.sqlite');
+    final db = AppDatabase(
+      NativeDatabase(
+        file,
+        setup: (database) {
+          database.execute(
+            'CREATE TABLE goals (effective_date TEXT NOT NULL PRIMARY KEY, '
+            'calories REAL NOT NULL, water_ounces REAL NOT NULL)',
+          );
+          database.execute(
+            "INSERT INTO goals VALUES ('2026-10-23', 2000, 64)",
+          );
+          database.execute('PRAGMA user_version = 1');
+        },
+      ),
+    );
+    try {
+      final goals = await db.select(db.goals).get();
+      expect(goals, hasLength(1));
+      expect(goals.single.proteinGrams, isNull);
+      expect(goals.single.carbsGrams, isNull);
+      expect(goals.single.fatGrams, isNull);
+    } finally {
+      await db.close();
+      await dir.delete(recursive: true);
     }
   });
   test('Live progress emits when entries and goals change', () async {

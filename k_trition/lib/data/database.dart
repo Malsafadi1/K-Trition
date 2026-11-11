@@ -24,10 +24,17 @@ class AppDatabase extends _$AppDatabase {
             ),
       );
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(goals, goals.proteinGrams);
+        await m.addColumn(goals, goals.carbsGrams);
+        await m.addColumn(goals, goals.fatGrams);
+      }
+    },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
@@ -38,6 +45,7 @@ class AppDatabase extends _$AppDatabase {
     final catalog = jsonDecode(
       await rootBundle.loadString('assets/data/foods.json'),
     ) as Map<String, dynamic>;
+    // Catalog versions change independently of the SQLite table schema.
     final version = catalog['catalog_version'] as int;
     final current = await customSelect(
       'SELECT version FROM catalog_state LIMIT 1',

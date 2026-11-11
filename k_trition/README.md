@@ -1,46 +1,49 @@
-# K-Trition
+# K-Trition Flutter app
 
-Group Flutter nutrition tracker for Kalamazoo College students.
+K-Trition is a Flutter nutrition tracker for Kalamazoo College students, backed by a persistent local SQLite database through Drift.
 
-## Current state
+## What works
 
 A complete local SQLite/Drift data layer is available for meal, water and goal storage.
 
 - Settings includes a device-persisted light/dark appearance preference, a meal-history viewer for saved Drift meals, and a Help & Support FAQ.
-- The dashboard's current quick-add food and water entries remain session-only; they are not yet written to the Drift database and therefore do not appear in Meal History.
+- Browse **300 everyday foods** across five categories, or search and scroll through matches.
+- Select a food, enter edible grams, and calculate calories from its USDA baseline.
+- Save meals by Breakfast, Lunch, Dinner or Snack; track water in **US fluid ounces**.
+- Set dated calorie/water goals and view daily progress and day/week/month history.
+- Delete logged entries. Logs and goals persist locally between sessions.
 
-- 5,084 USDA SR Legacy/Foundation foods from core food categories
-- 44 common choices with plain names, plus full paginated catalog search
-- Quantity-based calories and macros; food weights in grams
-- Meal/water CRUD, water in US fluid ounces, dated goals
-- Live progress streams, history queries and persistent local storage
-- No Firebase project, login, server, or cloud configuration needed
+The repository also supports multi-food meals, edits and macronutrient totals. There is no sign-in, server or cloud sync.
 
-Start with [the database/UI guide](docs/DATABASE_GUIDE.md). Review source counts in `assets/data/import_report.json` or browse `assets/data/foods_preview.csv` in Excel.
+## Run the app
 
-## Run
-
-Install Flutter (tested with 3.47.7), then from this directory:
+Install Flutter and Chrome, open a terminal in this `k_trition` folder, and run:
 
 ```sh
 flutter pub get
 flutter run -d chrome --web-port=7357
 ```
 
-In the original class workspace, use `../../flutter/bin/flutter` instead of `flutter`. Android and iOS require their respective toolchains. A fixed browser port keeps local data on the same origin.
+Open the URL printed by Flutter (normally `http://localhost:7357`). Keep the same host and port when testing browser database storage: browser storage is separated by origin.
 
-## Check
+To run on another platform, use `flutter devices` to see available targets and replace `chrome` in the run command with the desired device ID. Android and iOS builds require their platform toolchains. On Windows, use PowerShell or Command Prompt; in a shell where the Flutter command is not on `PATH`, run the Flutter SDK's `bin/flutter` command instead.
+
+## Check the project
+
+Run these commands from this folder:
 
 ```sh
+python3 -m unittest discover -s tool -p 'test_clean_food_catalog.py'
 flutter analyze
 flutter test
 flutter build web
 ```
 
-The starter screen does not show database content yet. To test the database directly, run the tests or the optional browser smoke check in [TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md).
+The tests cover category browsing, search/scrolling, logging, goals, dates, and database persistence. The optional [browser database smoke check](docs/TEAM_WORKFLOW.md#optional-browser-database-check) exercises the real web database separately from the dashboard.
 
-## Team development
+## Project guides
 
-Use [the push/pull and conflict-reduction instructions](docs/TEAM_WORKFLOW.md). Work on separate feature branches and review pull requests. The database owner maintains SQL/generated files; UI teammates call NutritionRepository.
-
-Commit the bundled public food catalog, SQL, generated database code and dependency lockfile. Do not commit personal live databases, credentials, build folders or the Flutter SDK. Every device has its own private local logs; code changes are shared through GitHub.
+- [Current features and next steps](docs/MVP.md)
+- [Database guide](docs/DATABASE_GUIDE.md)
+- [Team Git workflow](docs/TEAM_WORKFLOW.md)
+- [Core 300 catalog maintenance](tool/FOOD_CLEANUP.md)

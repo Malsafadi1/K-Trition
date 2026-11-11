@@ -1,3 +1,6 @@
+/// Reserved app recipe ID (not a USDA FDC ID): 30 g whey + 240 g water.
+const wheyShakeFoodId = 900000001;
+
 DateTime localDay(DateTime date) {
   final d = date.toLocal();
   return DateTime(d.year, d.month, d.day);
@@ -46,6 +49,9 @@ class DailyProgress {
     required this.waterOunces,
     required this.calorieGoal,
     required this.waterGoalOunces,
+    required this.proteinGoalGrams,
+    required this.carbsGoalGrams,
+    required this.fatGoalGrams,
   });
   final DateTime day;
   final NutritionTotals nutrition;
@@ -53,6 +59,7 @@ class DailyProgress {
 
   /// No invented targets: null until the user sets an effective goal.
   final double? calorieGoal, waterGoalOunces;
+  final double? proteinGoalGrams, carbsGoalGrams, fatGoalGrams;
   double? get calorieFraction =>
       calorieGoal == null ? null : nutrition.calories / calorieGoal!;
   double? get waterFraction =>

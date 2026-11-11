@@ -5,7 +5,9 @@ import '../data/nutrition_repository.dart';
 import '../features/dashboard/dashboard_screen.dart';
 
 class KTritionApp extends StatefulWidget {
-  const KTritionApp({super.key});
+  const KTritionApp({required this.repository, super.key});
+
+  final NutritionRepository repository;
 
   @override
   State<KTritionApp> createState() => _KTritionAppState();
@@ -16,7 +18,6 @@ class _KTritionAppState extends State<KTritionApp> {
 
   bool _isDarkMode = false;
   Object? _preferenceError;
-  Future<NutritionRepository>? _repository;
 
   @override
   void initState() {
@@ -51,8 +52,7 @@ class _KTritionAppState extends State<KTritionApp> {
     }
   }
 
-  Future<NutritionRepository> _loadRepository() =>
-      _repository ??= NutritionRepository.open();
+  Future<NutritionRepository> _loadRepository() async => widget.repository;
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +70,7 @@ class _KTritionAppState extends State<KTritionApp> {
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: _preferenceError == null
           ? DashboardScreen(
+              repository: widget.repository,
               onDarkModeChanged: _setDarkMode,
               repositoryLoader: _loadRepository,
             )

@@ -1,22 +1,20 @@
-# Local database: UI integration guide
+# Local database guide
 
-**Chosen backend: SQLite through Drift. No Firebase accounts, server, API keys, or cloud connection are needed.** The starter UI is unchanged; this is the data layer your teammates connect to their screens.
+**Storage:** local SQLite through Drift. No Firebase account, server, API key, or cloud connection is needed.
+
+The dashboard uses this database for food search, nutrition calculations, meal and water logs, goals, and history. Data stays on the device.
 
 ## Catalog scope
 
-The committed catalog has **5,084 foods** from the provided USDA FoodData Central `FoodData_Central_csv_2026-04-30` CSV download:
+The active catalog contains **300 everyday choices**: 56 Proteins, 108 Produce, 39 Grains & Carbs, 58 Dairy & Fats, and 39 Common Mixed/Prepared Items (including drinks and seasonings). `commonOnly: true` selects a smaller, 42-food shortlist.
 
-- 4,744 SR Legacy foods and 340 Foundation foods.
-- 44 plain-named common choices, available with `commonOnly: true`.
-- Core categories: produce, meats, poultry, fish, dairy/eggs, legumes, grains/pasta, nuts/seeds, fats/oils, and herbs/spices.
-- Excludes branded and survey records, baby-food, beverage/alcohol, prepared-entree, snack, sweets, fast-food and restaurant categories.
-- Some source category members include preparation/other ingredients; their full USDA descriptions remain available. This is a category-filtered basic-food catalog, not a claim that every record is chemically single-ingredient.
-- Original USDA IDs, descriptions, data types, publication dates and the chosen energy nutrient ID are retained in `assets/data/foods.json` and `foods_preview.csv` for review.
-- 89 records missing calories or a required macro were excluded. Missing values were not guessed or converted to zero.
+There is one simple listing per everyday food rather than cultivars, grades and trimming variants. Meaningful differences such as lean/regular ground beef and whole/skim milk remain. Each food uses one selected USDA SR Legacy/Foundation baseline; it is not an average or a guarantee about every brand or recipe. Names are simplified, and the original description remains in `source_name`.
 
-Amounts are normalized from USDA per-100-g values to per gram. Protein 1003, fat 1004 and carbohydrate 1005 use grams; energy uses kcal with priority 1008 → 2048 → 2047, never added together. Dietary “calories” means kcal. The importer verifies source units and rejects duplicate nutrient measurements requiring review.
+The 299 exact USDA baselines are maintained in `tool/core_food_baselines.json`. The 300th item is a transparent whey shake recipe: 30 g powder + 240 g water, local ID **900000001** (not a USDA ID). Selecting it defaults to 270 g. Nutrition equals the powder contribution.
 
-The common-choice aliases use one representative USDA record each, not averages of different cuts or recipes. The full catalog retains distinct source variants and preparation details. Do not merge raw and cooked food values just to shorten names.
+Nutrients are normalized from per 100 g to per gram. Protein 1003, fat 1004 and carbohydrate 1005 use grams; energy uses kcal with priority 1008 → 2048 → 2047, never added together. Missing nutrients fail import rather than becoming zero. Household portion weights are not guessed. Match edible grams to the baseline preparation shown by the app.
+
+See [catalog maintenance](../tool/FOOD_CLEANUP.md) for rebuilding and source extraction.
 
 ## Files
 
@@ -29,9 +27,11 @@ The common-choice aliases use one representative USDA record each, not averages 
 | `lib/data/models.dart` | Portions, nutrition totals, daily progress and date helpers |
 | `assets/data/foods.json` | Bundled public catalog; the app imports it locally |
 | `assets/data/foods_preview.csv` | Spreadsheet-friendly review export |
-| `assets/data/import_report.json` | Import counts, categories and exclusions |
-| `tool/food_choices.json` | Common aliases; only IDs in eligible categories are used |
-| `tool/build_food_catalog.py` | Reproducible source importer; not required by teammates to run the app |
+| `assets/data/catalog_report.json` | Current counts and category distribution |
+| `tool/simple_food_choices.json` | Simple names, categories, and explicit baseline IDs |
+| `tool/core_food_baselines.json` | 299 source-backed baselines; not bundled in the app |
+| `tool/clean_food_catalog.py` | Builds the active JSON, CSV and report |
+| `tool/import_core_baselines.py` | Optional re-extraction from the official USDA CSV download |
 | `web/sqlite3.wasm`, `web/drift_worker.js` | Matching Drift 2.35.3 browser runtime files |
 
 ## Tables and units
@@ -42,14 +42,14 @@ The common-choice aliases use one representative USDA record each, not averages 
 | meals | id, name, meal_type, logged_at |
 | meal_items | id, meal_id, food_id, food_name, grams, saved per-gram nutrients |
 | water_entries | id, ounces, logged_at |
-| goals | effective_date, calories, water_ounces |
+| goals | effective_date, calories, water_ounces, optional protein/carbs/fat gram targets |
 | catalog_state | Imported catalog version (internal) |
 
-Food quantities are **edible grams** matching the listed preparation. Water is stored/displayed in **US fluid ounces**, not weight ounces. Timestamps are epoch **milliseconds**; use `DateTime.fromMillisecondsSinceEpoch(value)` for display. Goals use a local `YYYY-MM-DD` effective date. Null goals mean the user has not set a target yet.
+Food quantities are **edible grams** matching the listed preparation. Water is stored/displayed in **US fluid ounces**, not weight ounces. Timestamps are epoch **milliseconds**; use `DateTime.fromMillisecondsSinceEpoch(value)` for display. Goals use a local `YYYY-MM-DD` effective date. Null macro goals mean the user has not set a target yet.
 
 A meal can contain multiple meal items. Deleting a meal cascades to its items. Saves/edits are transactional: failure leaves the original entry intact. Food nutrition is snapshotted into each meal item; existing food snapshots are preserved during edits even if catalog nutrition later changes. Adding a new food uses its current catalog values.
 
-## Open once, pass to screens later
+## Open once and share with the app
 
 ```dart
 import 'package:flutter/widgets.dart';
@@ -57,12 +57,12 @@ import 'package:k_trition/data/nutrition_repository.dart';
 
 WidgetsFlutterBinding.ensureInitialized();
 final repository = await NutritionRepository.open();
-// Pass this ONE repository to the future screens or your app's state provider.
-// Show loading/error states while opening. Close it when its owner is disposed:
+// Share this repository with screens or your app's state provider.
+// Show loading/error states while it opens. Close it when its owner is disposed:
 // await repository.close();
 ```
 
-Do not open a new database on every widget build. This code is intentionally **not called by main.dart yet**. The existing app still opens the MVP roadmap.
+Do not open a new database on every widget build. `main.dart` opens the repository once and passes it to the dashboard.
 
 ## Food selection and quantity previews
 
@@ -71,12 +71,12 @@ final common = await repository.searchFoods(commonOnly: true, limit: 50);
 final matches = await repository.searchFoods(query: 'chicken', limit: 25);
 final nextPage = await repository.searchFoods(query: 'chicken', limit: 25, offset: 25);
 final categories = await repository.getCategories();
-final fruit = await repository.searchFoods(category: 'Fruits and Fruit Juices');
+final fruit = await repository.searchFoods(category: 'Produce');
 final food = await repository.getFood(171688); // Apple
 final preview = repository.calculate(food, 150); // 78 calories
 ```
 
-Search matches substrings without case sensitivity and has stable name/ID ordering. Maximum page size is 100. Do not render the entire 5,084-item catalog at once. A future UI can start with common foods, then offer full-catalog search. `watchFoods(...)` provides a stream with the same query parameters.
+Search matches substrings without case sensitivity and has stable name/ID ordering. Maximum page size is 100. The dashboard browses by category and renders scrollable results. `watchFoods(...)` provides a stream with the same query parameters.
 
 ## Log, edit and delete
 
@@ -101,7 +101,12 @@ final water = await repository.waterForDay(DateTime.now());
 await repository.deleteWater(waterId);
 
 await repository.setGoals(
-  calories: 2000, waterOunces: 64, effectiveDate: DateTime.now(),
+  calories: 2000,
+  waterOunces: 64,
+  proteinGrams: 140,
+  carbsGrams: 250,
+  fatGrams: 70,
+  effectiveDate: DateTime.now(),
 ); // Example values only: users should choose their own targets.
 final progress = await repository.progressForDay(DateTime.now());
 final history = await repository.progressForRange(
@@ -109,7 +114,7 @@ final history = await repository.progressForRange(
 );
 ```
 
-Pass an existing ID to edit; a missing ID throws instead of silently recreating a deleted entry. Deleting a missing ID returns zero. Supported meal types: Breakfast, Lunch, Dinner, Snack. Catch exceptions in the future UI; await successful writes before showing success, and preserve input on failure.
+Pass an existing ID to edit; a missing ID throws instead of silently recreating a deleted entry. Deleting a missing ID returns zero. Supported meal types: Breakfast, Lunch, Dinner, Snack. In the UI, handle errors explicitly, wait for a write to succeed before showing success, and preserve the user's input if it fails.
 
 ## Live data and dates
 
@@ -118,11 +123,12 @@ final stream = repository.watchDailyProgress(selectedDate);
 // Future UI: use StreamBuilder<DailyProgress>(stream: stream, ...).
 // progress.nutrition.calories / protein / carbs / fat
 // progress.waterOunces, calorieGoal, waterGoalOunces
+// progress.proteinGoalGrams, carbsGoalGrams, fatGoalGrams
 ```
 
 `watchMeals(day)` and `watchWater(day)` also update after changes. Streams respond to edits/deletions and goal changes; totals are derived, not stored separately. Goal history uses the last effective date on or before the requested day. A new target does not rewrite earlier days.
 
-Daily windows run from local midnight to the next local midnight, so daylight-saving days are handled as calendar days rather than fixed 24-hour intervals. The UI must pass the same selected date to all forms and lists and recreate its streams when the date changes or midnight arrives. Historical grouping follows the device's current timezone. `progressForRange` supports up to 366 calendar days, with an exclusive end.
+Daily windows run from local midnight to the next local midnight, so daylight-saving days are handled as calendar days rather than fixed 24-hour intervals. When integrating the repository, pass the same selected date to forms and lists and recreate streams when the date changes or midnight arrives. Historical grouping follows the device's current timezone. `progressForRange` supports up to 366 calendar days, with an exclusive end.
 
 ## Persistence and ownership
 
@@ -134,7 +140,7 @@ Each device has its own logs. GitHub shares the catalog and code, **not private 
 
 After changing SQL, run `dart run build_runner build` and commit both SQL and regenerated Dart. Once this schema has shipped, increment `schemaVersion` and write/test a migration for any schema change. Do not delete user data to fix a schema issue.
 
-To rebuild the catalog, run `python3 tool/build_food_catalog.py /path/to/the/USDA/download`. Increment `catalog_version` when publishing a changed catalog. Import is transactional and skips already-imported versions. Removed choices are archived (`is_listed = false`), not deleted from existing logs; nutrient snapshots remain intact.
+To rebuild the catalog, run `python3 tool/clean_food_catalog.py`. Increment `catalog_version` when publishing a changed catalog. Import is transactional and skips already-imported versions. Removed choices are archived (`is_listed = false`), not deleted from existing logs; nutrient snapshots remain intact.
 
 ## Verify
 

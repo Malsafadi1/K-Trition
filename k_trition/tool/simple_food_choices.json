@@ -1,0 +1,1507 @@
+[
+  {
+    "name": "Beef steak",
+    "fdc_id": 173061,
+    "category": "Proteins"
+  },
+  {
+    "name": "Chicken breast",
+    "fdc_id": 171477,
+    "category": "Proteins"
+  },
+  {
+    "name": "Turkey breast",
+    "fdc_id": 171496,
+    "category": "Proteins"
+  },
+  {
+    "name": "Salmon",
+    "fdc_id": 175168,
+    "category": "Proteins"
+  },
+  {
+    "name": "Tuna",
+    "fdc_id": 334194,
+    "category": "Proteins"
+  },
+  {
+    "name": "Egg",
+    "fdc_id": 173424,
+    "category": "Proteins"
+  },
+  {
+    "name": "Tofu",
+    "fdc_id": 172475,
+    "category": "Proteins"
+  },
+  {
+    "name": "Black beans",
+    "fdc_id": 173735,
+    "category": "Proteins"
+  },
+  {
+    "name": "Chickpeas",
+    "fdc_id": 173757,
+    "category": "Proteins"
+  },
+  {
+    "name": "Hummus",
+    "fdc_id": 174289,
+    "category": "Proteins"
+  },
+  {
+    "name": "White rice",
+    "fdc_id": 168878,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Brown rice",
+    "fdc_id": 169704,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Pasta",
+    "fdc_id": 169737,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Potato",
+    "fdc_id": 170093,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Sweet potato",
+    "fdc_id": 168483,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Apple",
+    "fdc_id": 171688,
+    "category": "Produce"
+  },
+  {
+    "name": "Banana",
+    "fdc_id": 173944,
+    "category": "Produce"
+  },
+  {
+    "name": "Orange",
+    "fdc_id": 169097,
+    "category": "Produce"
+  },
+  {
+    "name": "Grapes",
+    "fdc_id": 174683,
+    "category": "Produce"
+  },
+  {
+    "name": "Strawberries",
+    "fdc_id": 167762,
+    "category": "Produce"
+  },
+  {
+    "name": "Blueberries",
+    "fdc_id": 171711,
+    "category": "Produce"
+  },
+  {
+    "name": "Avocado",
+    "fdc_id": 171705,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Pineapple",
+    "fdc_id": 169124,
+    "category": "Produce"
+  },
+  {
+    "name": "Broccoli",
+    "fdc_id": 169967,
+    "category": "Produce"
+  },
+  {
+    "name": "Carrots",
+    "fdc_id": 170394,
+    "category": "Produce"
+  },
+  {
+    "name": "Cucumber",
+    "fdc_id": 168409,
+    "category": "Produce"
+  },
+  {
+    "name": "Tomato",
+    "fdc_id": 170457,
+    "category": "Produce"
+  },
+  {
+    "name": "Romaine lettuce",
+    "fdc_id": 169247,
+    "category": "Produce"
+  },
+  {
+    "name": "Onion",
+    "fdc_id": 170000,
+    "category": "Produce"
+  },
+  {
+    "name": "Bell pepper",
+    "fdc_id": 170108,
+    "category": "Produce"
+  },
+  {
+    "name": "Spinach",
+    "fdc_id": 168462,
+    "category": "Produce"
+  },
+  {
+    "name": "Milk, 2%",
+    "fdc_id": 171267,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Greek yogurt",
+    "fdc_id": 330137,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Yogurt",
+    "fdc_id": 170886,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Cheddar cheese",
+    "fdc_id": 328637,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Mozzarella cheese",
+    "fdc_id": 170845,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Peanut butter",
+    "fdc_id": 172470,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Almonds",
+    "fdc_id": 170567,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Olive oil",
+    "fdc_id": 171413,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Butter",
+    "fdc_id": 173410,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Ranch dressing",
+    "fdc_id": 173592,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Orange juice",
+    "fdc_id": 169098,
+    "category": "Produce"
+  },
+  {
+    "name": "Pear",
+    "fdc_id": 169118,
+    "category": "Produce"
+  },
+  {
+    "name": "Peach",
+    "fdc_id": 169928,
+    "category": "Produce"
+  },
+  {
+    "name": "Mango",
+    "fdc_id": 169910,
+    "category": "Produce"
+  },
+  {
+    "name": "Watermelon",
+    "fdc_id": 167765,
+    "category": "Produce"
+  },
+  {
+    "name": "Kiwi",
+    "fdc_id": 168153,
+    "category": "Produce"
+  },
+  {
+    "name": "Raspberries",
+    "fdc_id": 167755,
+    "category": "Produce"
+  },
+  {
+    "name": "Blackberries",
+    "fdc_id": 173946,
+    "category": "Produce"
+  },
+  {
+    "name": "Cherries",
+    "fdc_id": 171719,
+    "category": "Produce"
+  },
+  {
+    "name": "Plum",
+    "fdc_id": 169949,
+    "category": "Produce"
+  },
+  {
+    "name": "Grapefruit",
+    "fdc_id": 173034,
+    "category": "Produce"
+  },
+  {
+    "name": "Lemon",
+    "fdc_id": 167746,
+    "category": "Produce"
+  },
+  {
+    "name": "Lime",
+    "fdc_id": 168155,
+    "category": "Produce"
+  },
+  {
+    "name": "Dates",
+    "fdc_id": 168191,
+    "category": "Produce"
+  },
+  {
+    "name": "Raisins",
+    "fdc_id": 168166,
+    "category": "Produce"
+  },
+  {
+    "name": "Apricot",
+    "fdc_id": 171697,
+    "category": "Produce"
+  },
+  {
+    "name": "Nectarine",
+    "fdc_id": 169914,
+    "category": "Produce"
+  },
+  {
+    "name": "Pomegranate",
+    "fdc_id": 169134,
+    "category": "Produce"
+  },
+  {
+    "name": "Cantaloupe",
+    "fdc_id": 169092,
+    "category": "Produce"
+  },
+  {
+    "name": "Cauliflower",
+    "fdc_id": 169986,
+    "category": "Produce"
+  },
+  {
+    "name": "Asparagus",
+    "fdc_id": 168389,
+    "category": "Produce"
+  },
+  {
+    "name": "Green beans",
+    "fdc_id": 169961,
+    "category": "Produce"
+  },
+  {
+    "name": "Corn",
+    "fdc_id": 168538,
+    "category": "Produce"
+  },
+  {
+    "name": "Peas",
+    "fdc_id": 170419,
+    "category": "Produce"
+  },
+  {
+    "name": "Mushrooms",
+    "fdc_id": 169251,
+    "category": "Produce"
+  },
+  {
+    "name": "Zucchini",
+    "fdc_id": 169291,
+    "category": "Produce"
+  },
+  {
+    "name": "Cabbage",
+    "fdc_id": 169975,
+    "category": "Produce"
+  },
+  {
+    "name": "Kale",
+    "fdc_id": 168421,
+    "category": "Produce"
+  },
+  {
+    "name": "Celery",
+    "fdc_id": 169988,
+    "category": "Produce"
+  },
+  {
+    "name": "Eggplant",
+    "fdc_id": 169228,
+    "category": "Produce"
+  },
+  {
+    "name": "Brussels sprouts",
+    "fdc_id": 170383,
+    "category": "Produce"
+  },
+  {
+    "name": "Beets",
+    "fdc_id": 169145,
+    "category": "Produce"
+  },
+  {
+    "name": "Garlic",
+    "fdc_id": 169230,
+    "category": "Produce"
+  },
+  {
+    "name": "Pumpkin",
+    "fdc_id": 168448,
+    "category": "Produce"
+  },
+  {
+    "name": "Radish",
+    "fdc_id": 169276,
+    "category": "Produce"
+  },
+  {
+    "name": "Green onion",
+    "fdc_id": 170005,
+    "category": "Produce"
+  },
+  {
+    "name": "Butternut squash",
+    "fdc_id": 169295,
+    "category": "Produce"
+  },
+  {
+    "name": "Garlic powder",
+    "fdc_id": 171325,
+    "category": "Produce"
+  },
+  {
+    "name": "Quinoa",
+    "fdc_id": 168917,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Couscous",
+    "fdc_id": 169700,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Barley",
+    "fdc_id": 170285,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Bulgur",
+    "fdc_id": 170287,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Oats",
+    "fdc_id": 2346397,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Cornmeal",
+    "fdc_id": 169750,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Wheat flour",
+    "fdc_id": 169761,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Rice noodles",
+    "fdc_id": 168914,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Wild rice",
+    "fdc_id": 168897,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Lentils",
+    "fdc_id": 172421,
+    "category": "Proteins"
+  },
+  {
+    "name": "Kidney beans",
+    "fdc_id": 175242,
+    "category": "Proteins"
+  },
+  {
+    "name": "Pinto beans",
+    "fdc_id": 173796,
+    "category": "Proteins"
+  },
+  {
+    "name": "White beans",
+    "fdc_id": 175249,
+    "category": "Proteins"
+  },
+  {
+    "name": "Edamame",
+    "fdc_id": 168411,
+    "category": "Proteins"
+  },
+  {
+    "name": "Tempeh",
+    "fdc_id": 172467,
+    "category": "Proteins"
+  },
+  {
+    "name": "Refried beans",
+    "fdc_id": 172465,
+    "category": "Proteins"
+  },
+  {
+    "name": "Falafel",
+    "fdc_id": 172455,
+    "category": "Proteins"
+  },
+  {
+    "name": "Shrimp",
+    "fdc_id": 175180,
+    "category": "Proteins"
+  },
+  {
+    "name": "Cod",
+    "fdc_id": 175178,
+    "category": "Proteins"
+  },
+  {
+    "name": "Tilapia",
+    "fdc_id": 175177,
+    "category": "Proteins"
+  },
+  {
+    "name": "Chicken thigh",
+    "fdc_id": 172388,
+    "category": "Proteins"
+  },
+  {
+    "name": "Chicken wing",
+    "fdc_id": 173630,
+    "category": "Proteins"
+  },
+  {
+    "name": "Ground turkey",
+    "fdc_id": 171506,
+    "category": "Proteins"
+  },
+  {
+    "name": "Pork chop",
+    "fdc_id": 168235,
+    "category": "Proteins"
+  },
+  {
+    "name": "Ham",
+    "fdc_id": 746952,
+    "category": "Proteins"
+  },
+  {
+    "name": "Bacon",
+    "fdc_id": 167914,
+    "category": "Proteins"
+  },
+  {
+    "name": "Lamb",
+    "fdc_id": 172544,
+    "category": "Proteins"
+  },
+  {
+    "name": "Egg white",
+    "fdc_id": 172183,
+    "category": "Proteins"
+  },
+  {
+    "name": "Cottage cheese",
+    "fdc_id": 2346384,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Cream cheese",
+    "fdc_id": 2346385,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Sour cream",
+    "fdc_id": 173443,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Parmesan cheese",
+    "fdc_id": 170848,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Feta cheese",
+    "fdc_id": 173420,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Soy milk",
+    "fdc_id": 173768,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Kefir",
+    "fdc_id": 170904,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Walnuts",
+    "fdc_id": 2346394,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Cashews",
+    "fdc_id": 170162,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Pistachios",
+    "fdc_id": 170184,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Peanuts",
+    "fdc_id": 2515376,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Chia seeds",
+    "fdc_id": 170554,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Flaxseed",
+    "fdc_id": 169414,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Sunflower seeds",
+    "fdc_id": 2515381,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Pumpkin seeds",
+    "fdc_id": 2515380,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Almond butter",
+    "fdc_id": 2262074,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Coconut oil",
+    "fdc_id": 171412,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Canola oil",
+    "fdc_id": 172336,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Mayonnaise",
+    "fdc_id": 171009,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Salt",
+    "fdc_id": 173468,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Black pepper",
+    "fdc_id": 170931,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Cinnamon",
+    "fdc_id": 171320,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Paprika",
+    "fdc_id": 171329,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Cumin",
+    "fdc_id": 170923,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Basil",
+    "fdc_id": 172232,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Oregano",
+    "fdc_id": 171328,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Soy sauce",
+    "fdc_id": 174277,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Mustard",
+    "fdc_id": 172234,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Ketchup",
+    "fdc_id": 168556,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Vinegar",
+    "fdc_id": 173469,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Whole chicken",
+    "fdc_id": 171450,
+    "category": "Proteins"
+  },
+  {
+    "name": "Chicken drumstick",
+    "fdc_id": 173612,
+    "category": "Proteins"
+  },
+  {
+    "name": "Ground beef, lean",
+    "fdc_id": 171794,
+    "category": "Proteins"
+  },
+  {
+    "name": "Ground beef, regular",
+    "fdc_id": 171799,
+    "category": "Proteins"
+  },
+  {
+    "name": "Ground pork",
+    "fdc_id": 167903,
+    "category": "Proteins"
+  },
+  {
+    "name": "Pork tenderloin",
+    "fdc_id": 168250,
+    "category": "Proteins"
+  },
+  {
+    "name": "Beef roast",
+    "fdc_id": 170615,
+    "category": "Proteins"
+  },
+  {
+    "name": "Beef ribs",
+    "fdc_id": 169569,
+    "category": "Proteins"
+  },
+  {
+    "name": "Sausage",
+    "fdc_id": 332864,
+    "category": "Proteins"
+  },
+  {
+    "name": "Turkey sausage",
+    "fdc_id": 173871,
+    "category": "Proteins"
+  },
+  {
+    "name": "Duck",
+    "fdc_id": 172411,
+    "category": "Proteins"
+  },
+  {
+    "name": "Trout",
+    "fdc_id": 173718,
+    "category": "Proteins"
+  },
+  {
+    "name": "Sardines",
+    "fdc_id": 175139,
+    "category": "Proteins"
+  },
+  {
+    "name": "Mackerel",
+    "fdc_id": 175120,
+    "category": "Proteins"
+  },
+  {
+    "name": "Haddock",
+    "fdc_id": 174198,
+    "category": "Proteins"
+  },
+  {
+    "name": "Halibut",
+    "fdc_id": 174201,
+    "category": "Proteins"
+  },
+  {
+    "name": "Catfish",
+    "fdc_id": 175166,
+    "category": "Proteins"
+  },
+  {
+    "name": "Pollock",
+    "fdc_id": 173726,
+    "category": "Proteins"
+  },
+  {
+    "name": "Crab",
+    "fdc_id": 174205,
+    "category": "Proteins"
+  },
+  {
+    "name": "Lobster",
+    "fdc_id": 174209,
+    "category": "Proteins"
+  },
+  {
+    "name": "Scallops",
+    "fdc_id": 167742,
+    "category": "Proteins"
+  },
+  {
+    "name": "Clams",
+    "fdc_id": 171975,
+    "category": "Proteins"
+  },
+  {
+    "name": "Mussels",
+    "fdc_id": 174217,
+    "category": "Proteins"
+  },
+  {
+    "name": "Oysters",
+    "fdc_id": 171979,
+    "category": "Proteins"
+  },
+  {
+    "name": "Soy protein powder",
+    "fdc_id": 174276,
+    "category": "Proteins"
+  },
+  {
+    "name": "Peanut flour",
+    "fdc_id": 174267,
+    "category": "Proteins"
+  },
+  {
+    "name": "Red cabbage",
+    "fdc_id": 169977,
+    "category": "Produce"
+  },
+  {
+    "name": "Red onion",
+    "fdc_id": 790577,
+    "category": "Produce"
+  },
+  {
+    "name": "Iceberg lettuce",
+    "fdc_id": 2346388,
+    "category": "Produce"
+  },
+  {
+    "name": "Green leaf lettuce",
+    "fdc_id": 169249,
+    "category": "Produce"
+  },
+  {
+    "name": "Arugula",
+    "fdc_id": 169387,
+    "category": "Produce"
+  },
+  {
+    "name": "Swiss chard",
+    "fdc_id": 169991,
+    "category": "Produce"
+  },
+  {
+    "name": "Collard greens",
+    "fdc_id": 170406,
+    "category": "Produce"
+  },
+  {
+    "name": "Mustard greens",
+    "fdc_id": 169256,
+    "category": "Produce"
+  },
+  {
+    "name": "Bok choy",
+    "fdc_id": 170390,
+    "category": "Produce"
+  },
+  {
+    "name": "Watercress",
+    "fdc_id": 170068,
+    "category": "Produce"
+  },
+  {
+    "name": "Turnip",
+    "fdc_id": 170465,
+    "category": "Produce"
+  },
+  {
+    "name": "Parsnip",
+    "fdc_id": 170417,
+    "category": "Produce"
+  },
+  {
+    "name": "Rutabaga",
+    "fdc_id": 168454,
+    "category": "Produce"
+  },
+  {
+    "name": "Leek",
+    "fdc_id": 169246,
+    "category": "Produce"
+  },
+  {
+    "name": "Shallot",
+    "fdc_id": 170499,
+    "category": "Produce"
+  },
+  {
+    "name": "Ginger",
+    "fdc_id": 169231,
+    "category": "Produce"
+  },
+  {
+    "name": "Jalapeno",
+    "fdc_id": 168576,
+    "category": "Produce"
+  },
+  {
+    "name": "Chili pepper",
+    "fdc_id": 170106,
+    "category": "Produce"
+  },
+  {
+    "name": "Spaghetti squash",
+    "fdc_id": 169298,
+    "category": "Produce"
+  },
+  {
+    "name": "Acorn squash",
+    "fdc_id": 168472,
+    "category": "Produce"
+  },
+  {
+    "name": "Yellow squash",
+    "fdc_id": 168464,
+    "category": "Produce"
+  },
+  {
+    "name": "Artichoke",
+    "fdc_id": 169205,
+    "category": "Produce"
+  },
+  {
+    "name": "Okra",
+    "fdc_id": 169260,
+    "category": "Produce"
+  },
+  {
+    "name": "Fennel",
+    "fdc_id": 169385,
+    "category": "Produce"
+  },
+  {
+    "name": "Celery root",
+    "fdc_id": 170400,
+    "category": "Produce"
+  },
+  {
+    "name": "Kohlrabi",
+    "fdc_id": 168424,
+    "category": "Produce"
+  },
+  {
+    "name": "Bamboo shoots",
+    "fdc_id": 169210,
+    "category": "Produce"
+  },
+  {
+    "name": "Hearts of palm",
+    "fdc_id": 168569,
+    "category": "Produce"
+  },
+  {
+    "name": "Snow peas",
+    "fdc_id": 170010,
+    "category": "Produce"
+  },
+  {
+    "name": "Bean sprouts",
+    "fdc_id": 169957,
+    "category": "Produce"
+  },
+  {
+    "name": "Alfalfa sprouts",
+    "fdc_id": 168384,
+    "category": "Produce"
+  },
+  {
+    "name": "Portobello mushroom",
+    "fdc_id": 169255,
+    "category": "Produce"
+  },
+  {
+    "name": "Shiitake mushroom",
+    "fdc_id": 169242,
+    "category": "Produce"
+  },
+  {
+    "name": "Cranberries",
+    "fdc_id": 171722,
+    "category": "Produce"
+  },
+  {
+    "name": "Clementine",
+    "fdc_id": 168195,
+    "category": "Produce"
+  },
+  {
+    "name": "Tangerine",
+    "fdc_id": 169105,
+    "category": "Produce"
+  },
+  {
+    "name": "Papaya",
+    "fdc_id": 169926,
+    "category": "Produce"
+  },
+  {
+    "name": "Guava",
+    "fdc_id": 173044,
+    "category": "Produce"
+  },
+  {
+    "name": "Passion fruit",
+    "fdc_id": 169108,
+    "category": "Produce"
+  },
+  {
+    "name": "Honeydew melon",
+    "fdc_id": 169911,
+    "category": "Produce"
+  },
+  {
+    "name": "Persimmon",
+    "fdc_id": 169941,
+    "category": "Produce"
+  },
+  {
+    "name": "Fig",
+    "fdc_id": 173021,
+    "category": "Produce"
+  },
+  {
+    "name": "Prunes",
+    "fdc_id": 168162,
+    "category": "Produce"
+  },
+  {
+    "name": "Star fruit",
+    "fdc_id": 171715,
+    "category": "Produce"
+  },
+  {
+    "name": "Lychee",
+    "fdc_id": 169086,
+    "category": "Produce"
+  },
+  {
+    "name": "Coconut",
+    "fdc_id": 170169,
+    "category": "Produce"
+  },
+  {
+    "name": "Black olives",
+    "fdc_id": 169094,
+    "category": "Produce"
+  },
+  {
+    "name": "Green olives",
+    "fdc_id": 169096,
+    "category": "Produce"
+  },
+  {
+    "name": "Sauerkraut",
+    "fdc_id": 169279,
+    "category": "Produce"
+  },
+  {
+    "name": "Pickles",
+    "fdc_id": 168558,
+    "category": "Produce"
+  },
+  {
+    "name": "Cilantro",
+    "fdc_id": 169997,
+    "category": "Produce"
+  },
+  {
+    "name": "Parsley",
+    "fdc_id": 170416,
+    "category": "Produce"
+  },
+  {
+    "name": "Dill",
+    "fdc_id": 172233,
+    "category": "Produce"
+  },
+  {
+    "name": "Mint",
+    "fdc_id": 173475,
+    "category": "Produce"
+  },
+  {
+    "name": "Chives",
+    "fdc_id": 169994,
+    "category": "Produce"
+  },
+  {
+    "name": "White bread",
+    "fdc_id": 325871,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Whole wheat bread",
+    "fdc_id": 172688,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Sourdough bread",
+    "fdc_id": 172675,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Rye bread",
+    "fdc_id": 172684,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Pita bread",
+    "fdc_id": 174915,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "English muffin",
+    "fdc_id": 172828,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Bagel",
+    "fdc_id": 174899,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Flour tortilla",
+    "fdc_id": 167535,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Corn tortilla",
+    "fdc_id": 175036,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Oatmeal",
+    "fdc_id": 173905,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Whole wheat pasta",
+    "fdc_id": 168910,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Egg noodles",
+    "fdc_id": 168919,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Buckwheat",
+    "fdc_id": 170686,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Millet",
+    "fdc_id": 168871,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Grits",
+    "fdc_id": 171655,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Rice cakes",
+    "fdc_id": 170250,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Crackers",
+    "fdc_id": 172746,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Popcorn",
+    "fdc_id": 167959,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Pretzels",
+    "fdc_id": 167555,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Granola",
+    "fdc_id": 171646,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Pancake",
+    "fdc_id": 175009,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Waffle",
+    "fdc_id": 175039,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Croissant",
+    "fdc_id": 174987,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Biscuit",
+    "fdc_id": 172670,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Dinner roll",
+    "fdc_id": 172793,
+    "category": "Grains & Carbs"
+  },
+  {
+    "name": "Whole milk",
+    "fdc_id": 171265,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Skim milk",
+    "fdc_id": 171269,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Low-fat milk",
+    "fdc_id": 170872,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Almond milk",
+    "fdc_id": 174832,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Swiss cheese",
+    "fdc_id": 171251,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Provolone cheese",
+    "fdc_id": 170850,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "American cheese",
+    "fdc_id": 171290,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Ricotta cheese",
+    "fdc_id": 170851,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Gouda cheese",
+    "fdc_id": 171241,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Brie cheese",
+    "fdc_id": 172177,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Blue cheese",
+    "fdc_id": 172175,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Goat cheese",
+    "fdc_id": 173435,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Heavy cream",
+    "fdc_id": 170859,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Half-and-half",
+    "fdc_id": 171255,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Ghee",
+    "fdc_id": 173412,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Mixed nuts",
+    "fdc_id": 170587,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Pecans",
+    "fdc_id": 170182,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Hazelnuts",
+    "fdc_id": 170581,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Macadamia nuts",
+    "fdc_id": 170178,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Brazil nuts",
+    "fdc_id": 170569,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Pine nuts",
+    "fdc_id": 170591,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Sesame seeds",
+    "fdc_id": 170150,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Tahini",
+    "fdc_id": 169410,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Sunflower oil",
+    "fdc_id": 171025,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Sesame oil",
+    "fdc_id": 171016,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Avocado oil",
+    "fdc_id": 173573,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Vegetable oil",
+    "fdc_id": 171411,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Cheese pizza",
+    "fdc_id": 173292,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Pepperoni pizza",
+    "fdc_id": 173295,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Hamburger",
+    "fdc_id": 170693,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Cheeseburger",
+    "fdc_id": 170690,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Chicken nuggets",
+    "fdc_id": 170718,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "French fries",
+    "fdc_id": 170698,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Chicken noodle soup",
+    "fdc_id": 172909,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Tomato soup",
+    "fdc_id": 171176,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Chili",
+    "fdc_id": 172097,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Baked beans",
+    "fdc_id": 175182,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Potato salad",
+    "fdc_id": 169269,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Coleslaw",
+    "fdc_id": 170300,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Mashed potatoes",
+    "fdc_id": 168555,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Black coffee",
+    "fdc_id": 171890,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Tea",
+    "fdc_id": 173227,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Apple juice",
+    "fdc_id": 167771,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Grape juice",
+    "fdc_id": 173041,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Cranberry juice",
+    "fdc_id": 171903,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Chocolate milk",
+    "fdc_id": 170879,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Vanilla ice cream",
+    "fdc_id": 167575,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Tuna salad",
+    "fdc_id": 175160,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Burrito",
+    "fdc_id": 172038,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Beef taco",
+    "fdc_id": 170763,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Fried rice",
+    "fdc_id": 167668,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Chicken stir-fry",
+    "fdc_id": 167678,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Beef stew",
+    "fdc_id": 173330,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Whey protein powder",
+    "fdc_id": 173180,
+    "category": "Proteins"
+  },
+  {
+    "name": "Oat milk",
+    "fdc_id": 2257046,
+    "category": "Dairy & Fats"
+  },
+  {
+    "name": "Macaroni and cheese",
+    "fdc_id": 173325,
+    "category": "Common Mixed/Prepared Items"
+  },
+  {
+    "name": "Whey shake",
+    "fdc_id": 900000001,
+    "category": "Common Mixed/Prepared Items",
+    "recipe": {
+      "powder_fdc_id": 173180,
+      "powder_g": 30,
+      "water_g": 240
+    }
+  }
+]

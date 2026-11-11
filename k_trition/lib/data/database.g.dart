@@ -1729,8 +1729,48 @@ class Goals extends Table with TableInfo<Goals, Goal> {
     requiredDuringInsert: true,
     $customConstraints: 'NOT NULL CHECK (water_ounces > 0)',
   );
+  static const VerificationMeta _proteinGramsMeta = const VerificationMeta(
+    'proteinGrams',
+  );
+  late final GeneratedColumn<double> proteinGrams = GeneratedColumn<double>(
+    'protein_grams',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _carbsGramsMeta = const VerificationMeta(
+    'carbsGrams',
+  );
+  late final GeneratedColumn<double> carbsGrams = GeneratedColumn<double>(
+    'carbs_grams',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _fatGramsMeta = const VerificationMeta(
+    'fatGrams',
+  );
+  late final GeneratedColumn<double> fatGrams = GeneratedColumn<double>(
+    'fat_grams',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
   @override
-  List<GeneratedColumn> get $columns => [effectiveDate, calories, waterOunces];
+  List<GeneratedColumn> get $columns => [
+    effectiveDate,
+    calories,
+    waterOunces,
+    proteinGrams,
+    carbsGrams,
+    fatGrams,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1773,6 +1813,27 @@ class Goals extends Table with TableInfo<Goals, Goal> {
     } else if (isInserting) {
       context.missing(_waterOuncesMeta);
     }
+    if (data.containsKey('protein_grams')) {
+      context.handle(
+        _proteinGramsMeta,
+        proteinGrams.isAcceptableOrUnknown(
+          data['protein_grams']!,
+          _proteinGramsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('carbs_grams')) {
+      context.handle(
+        _carbsGramsMeta,
+        carbsGrams.isAcceptableOrUnknown(data['carbs_grams']!, _carbsGramsMeta),
+      );
+    }
+    if (data.containsKey('fat_grams')) {
+      context.handle(
+        _fatGramsMeta,
+        fatGrams.isAcceptableOrUnknown(data['fat_grams']!, _fatGramsMeta),
+      );
+    }
     return context;
   }
 
@@ -1794,6 +1855,18 @@ class Goals extends Table with TableInfo<Goals, Goal> {
         DriftSqlType.double,
         data['${effectivePrefix}water_ounces'],
       )!,
+      proteinGrams: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}protein_grams'],
+      ),
+      carbsGrams: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}carbs_grams'],
+      ),
+      fatGrams: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}fat_grams'],
+      ),
     );
   }
 
@@ -1810,10 +1883,16 @@ class Goal extends DataClass implements Insertable<Goal> {
   final String effectiveDate;
   final double calories;
   final double waterOunces;
+  final double? proteinGrams;
+  final double? carbsGrams;
+  final double? fatGrams;
   const Goal({
     required this.effectiveDate,
     required this.calories,
     required this.waterOunces,
+    this.proteinGrams,
+    this.carbsGrams,
+    this.fatGrams,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1821,6 +1900,15 @@ class Goal extends DataClass implements Insertable<Goal> {
     map['effective_date'] = Variable<String>(effectiveDate);
     map['calories'] = Variable<double>(calories);
     map['water_ounces'] = Variable<double>(waterOunces);
+    if (!nullToAbsent || proteinGrams != null) {
+      map['protein_grams'] = Variable<double>(proteinGrams);
+    }
+    if (!nullToAbsent || carbsGrams != null) {
+      map['carbs_grams'] = Variable<double>(carbsGrams);
+    }
+    if (!nullToAbsent || fatGrams != null) {
+      map['fat_grams'] = Variable<double>(fatGrams);
+    }
     return map;
   }
 
@@ -1829,6 +1917,15 @@ class Goal extends DataClass implements Insertable<Goal> {
       effectiveDate: Value(effectiveDate),
       calories: Value(calories),
       waterOunces: Value(waterOunces),
+      proteinGrams: proteinGrams == null && nullToAbsent
+          ? const Value.absent()
+          : Value(proteinGrams),
+      carbsGrams: carbsGrams == null && nullToAbsent
+          ? const Value.absent()
+          : Value(carbsGrams),
+      fatGrams: fatGrams == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fatGrams),
     );
   }
 
@@ -1841,6 +1938,9 @@ class Goal extends DataClass implements Insertable<Goal> {
       effectiveDate: serializer.fromJson<String>(json['effective_date']),
       calories: serializer.fromJson<double>(json['calories']),
       waterOunces: serializer.fromJson<double>(json['water_ounces']),
+      proteinGrams: serializer.fromJson<double?>(json['protein_grams']),
+      carbsGrams: serializer.fromJson<double?>(json['carbs_grams']),
+      fatGrams: serializer.fromJson<double?>(json['fat_grams']),
     );
   }
   @override
@@ -1850,6 +1950,9 @@ class Goal extends DataClass implements Insertable<Goal> {
       'effective_date': serializer.toJson<String>(effectiveDate),
       'calories': serializer.toJson<double>(calories),
       'water_ounces': serializer.toJson<double>(waterOunces),
+      'protein_grams': serializer.toJson<double?>(proteinGrams),
+      'carbs_grams': serializer.toJson<double?>(carbsGrams),
+      'fat_grams': serializer.toJson<double?>(fatGrams),
     };
   }
 
@@ -1857,10 +1960,16 @@ class Goal extends DataClass implements Insertable<Goal> {
     String? effectiveDate,
     double? calories,
     double? waterOunces,
+    Value<double?> proteinGrams = const Value.absent(),
+    Value<double?> carbsGrams = const Value.absent(),
+    Value<double?> fatGrams = const Value.absent(),
   }) => Goal(
     effectiveDate: effectiveDate ?? this.effectiveDate,
     calories: calories ?? this.calories,
     waterOunces: waterOunces ?? this.waterOunces,
+    proteinGrams: proteinGrams.present ? proteinGrams.value : this.proteinGrams,
+    carbsGrams: carbsGrams.present ? carbsGrams.value : this.carbsGrams,
+    fatGrams: fatGrams.present ? fatGrams.value : this.fatGrams,
   );
   Goal copyWithCompanion(GoalsCompanion data) {
     return Goal(
@@ -1871,6 +1980,13 @@ class Goal extends DataClass implements Insertable<Goal> {
       waterOunces: data.waterOunces.present
           ? data.waterOunces.value
           : this.waterOunces,
+      proteinGrams: data.proteinGrams.present
+          ? data.proteinGrams.value
+          : this.proteinGrams,
+      carbsGrams: data.carbsGrams.present
+          ? data.carbsGrams.value
+          : this.carbsGrams,
+      fatGrams: data.fatGrams.present ? data.fatGrams.value : this.fatGrams,
     );
   }
 
@@ -1879,37 +1995,59 @@ class Goal extends DataClass implements Insertable<Goal> {
     return (StringBuffer('Goal(')
           ..write('effectiveDate: $effectiveDate, ')
           ..write('calories: $calories, ')
-          ..write('waterOunces: $waterOunces')
+          ..write('waterOunces: $waterOunces, ')
+          ..write('proteinGrams: $proteinGrams, ')
+          ..write('carbsGrams: $carbsGrams, ')
+          ..write('fatGrams: $fatGrams')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(effectiveDate, calories, waterOunces);
+  int get hashCode => Object.hash(
+    effectiveDate,
+    calories,
+    waterOunces,
+    proteinGrams,
+    carbsGrams,
+    fatGrams,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Goal &&
           other.effectiveDate == this.effectiveDate &&
           other.calories == this.calories &&
-          other.waterOunces == this.waterOunces);
+          other.waterOunces == this.waterOunces &&
+          other.proteinGrams == this.proteinGrams &&
+          other.carbsGrams == this.carbsGrams &&
+          other.fatGrams == this.fatGrams);
 }
 
 class GoalsCompanion extends UpdateCompanion<Goal> {
   final Value<String> effectiveDate;
   final Value<double> calories;
   final Value<double> waterOunces;
+  final Value<double?> proteinGrams;
+  final Value<double?> carbsGrams;
+  final Value<double?> fatGrams;
   final Value<int> rowid;
   const GoalsCompanion({
     this.effectiveDate = const Value.absent(),
     this.calories = const Value.absent(),
     this.waterOunces = const Value.absent(),
+    this.proteinGrams = const Value.absent(),
+    this.carbsGrams = const Value.absent(),
+    this.fatGrams = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GoalsCompanion.insert({
     required String effectiveDate,
     required double calories,
     required double waterOunces,
+    this.proteinGrams = const Value.absent(),
+    this.carbsGrams = const Value.absent(),
+    this.fatGrams = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : effectiveDate = Value(effectiveDate),
        calories = Value(calories),
@@ -1918,12 +2056,18 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Expression<String>? effectiveDate,
     Expression<double>? calories,
     Expression<double>? waterOunces,
+    Expression<double>? proteinGrams,
+    Expression<double>? carbsGrams,
+    Expression<double>? fatGrams,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (effectiveDate != null) 'effective_date': effectiveDate,
       if (calories != null) 'calories': calories,
       if (waterOunces != null) 'water_ounces': waterOunces,
+      if (proteinGrams != null) 'protein_grams': proteinGrams,
+      if (carbsGrams != null) 'carbs_grams': carbsGrams,
+      if (fatGrams != null) 'fat_grams': fatGrams,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1932,12 +2076,18 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     Value<String>? effectiveDate,
     Value<double>? calories,
     Value<double>? waterOunces,
+    Value<double?>? proteinGrams,
+    Value<double?>? carbsGrams,
+    Value<double?>? fatGrams,
     Value<int>? rowid,
   }) {
     return GoalsCompanion(
       effectiveDate: effectiveDate ?? this.effectiveDate,
       calories: calories ?? this.calories,
       waterOunces: waterOunces ?? this.waterOunces,
+      proteinGrams: proteinGrams ?? this.proteinGrams,
+      carbsGrams: carbsGrams ?? this.carbsGrams,
+      fatGrams: fatGrams ?? this.fatGrams,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1954,6 +2104,15 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
     if (waterOunces.present) {
       map['water_ounces'] = Variable<double>(waterOunces.value);
     }
+    if (proteinGrams.present) {
+      map['protein_grams'] = Variable<double>(proteinGrams.value);
+    }
+    if (carbsGrams.present) {
+      map['carbs_grams'] = Variable<double>(carbsGrams.value);
+    }
+    if (fatGrams.present) {
+      map['fat_grams'] = Variable<double>(fatGrams.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1966,6 +2125,9 @@ class GoalsCompanion extends UpdateCompanion<Goal> {
           ..write('effectiveDate: $effectiveDate, ')
           ..write('calories: $calories, ')
           ..write('waterOunces: $waterOunces, ')
+          ..write('proteinGrams: $proteinGrams, ')
+          ..write('carbsGrams: $carbsGrams, ')
+          ..write('fatGrams: $fatGrams, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3448,12 +3610,18 @@ typedef $GoalsCreateCompanionBuilder = GoalsCompanion Function({
   required String effectiveDate,
   required double calories,
   required double waterOunces,
+  Value<double?> proteinGrams,
+  Value<double?> carbsGrams,
+  Value<double?> fatGrams,
   Value<int> rowid,
 });
 typedef $GoalsUpdateCompanionBuilder = GoalsCompanion Function({
   Value<String> effectiveDate,
   Value<double> calories,
   Value<double> waterOunces,
+  Value<double?> proteinGrams,
+  Value<double?> carbsGrams,
+  Value<double?> fatGrams,
   Value<int> rowid,
 });
 
@@ -3477,6 +3645,21 @@ class $GoalsFilterComposer extends Composer<_$AppDatabase, Goals> {
 
   ColumnFilters<double> get waterOunces => $composableBuilder(
     column: $table.waterOunces,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get proteinGrams => $composableBuilder(
+    column: $table.proteinGrams,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get carbsGrams => $composableBuilder(
+    column: $table.carbsGrams,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get fatGrams => $composableBuilder(
+    column: $table.fatGrams,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3503,6 +3686,21 @@ class $GoalsOrderingComposer extends Composer<_$AppDatabase, Goals> {
     column: $table.waterOunces,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<double> get proteinGrams => $composableBuilder(
+    column: $table.proteinGrams,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get carbsGrams => $composableBuilder(
+    column: $table.carbsGrams,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get fatGrams => $composableBuilder(
+    column: $table.fatGrams,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $GoalsAnnotationComposer extends Composer<_$AppDatabase, Goals> {
@@ -3525,6 +3723,19 @@ class $GoalsAnnotationComposer extends Composer<_$AppDatabase, Goals> {
     column: $table.waterOunces,
     builder: (column) => column,
   );
+
+  GeneratedColumn<double> get proteinGrams => $composableBuilder(
+    column: $table.proteinGrams,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get carbsGrams => $composableBuilder(
+    column: $table.carbsGrams,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get fatGrams =>
+      $composableBuilder(column: $table.fatGrams, builder: (column) => column);
 }
 
 class $GoalsTableManager
@@ -3558,11 +3769,17 @@ class $GoalsTableManager
                 Value<String> effectiveDate = const Value.absent(),
                 Value<double> calories = const Value.absent(),
                 Value<double> waterOunces = const Value.absent(),
+                Value<double?> proteinGrams = const Value.absent(),
+                Value<double?> carbsGrams = const Value.absent(),
+                Value<double?> fatGrams = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GoalsCompanion(
                 effectiveDate: effectiveDate,
                 calories: calories,
                 waterOunces: waterOunces,
+                proteinGrams: proteinGrams,
+                carbsGrams: carbsGrams,
+                fatGrams: fatGrams,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3570,11 +3787,17 @@ class $GoalsTableManager
                 required String effectiveDate,
                 required double calories,
                 required double waterOunces,
+                Value<double?> proteinGrams = const Value.absent(),
+                Value<double?> carbsGrams = const Value.absent(),
+                Value<double?> fatGrams = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GoalsCompanion.insert(
                 effectiveDate: effectiveDate,
                 calories: calories,
                 waterOunces: waterOunces,
+                proteinGrams: proteinGrams,
+                carbsGrams: carbsGrams,
+                fatGrams: fatGrams,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

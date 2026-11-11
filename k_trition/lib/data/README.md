@@ -1,10 +1,5 @@
-# Local SQLite data layer
+# Local data layer
 
-Start with [the database/UI integration guide](../../docs/DATABASE_GUIDE.md).
+The dashboard uses this Drift/SQLite data layer for Core 300 food search, serving-based calories, meal/water logging, dated goals, and history. Data persists locally; no cloud account or API key is required.
 
-- 5,084 USDA SR Legacy/Foundation foods, plus a 44-food common-choice filter
-- Food search, quantity-based calories/macros, meal/water CRUD, dated goals
-- Live daily progress streams and persistent SQLite storage
-- No Firebase, login, cloud project, or UI integration yet
-
-Teammates should use `NutritionRepository.open()` once and pass the repository to their future screens. The current starter UI remains unchanged.
+Start with the [database guide](../../docs/DATABASE_GUIDE.md) for tables, units and repository examples, or the [catalog guide](../../tool/FOOD_CLEANUP.md) to change food choices. Share one repository per app; do not create a database on every widget build. Generated `database.g.dart` should be regenerated from `schema.drift`, never hand-edited.

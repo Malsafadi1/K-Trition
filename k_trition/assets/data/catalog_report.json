@@ -1,0 +1,13 @@
+{
+  "catalog_version": 5,
+  "source_baselines": 299,
+  "master_foods": 300,
+  "policy": "One USDA baseline per food; whey shake is a documented powder-and-water recipe.",
+  "categories": {
+    "Produce": 108,
+    "Dairy & Fats": 58,
+    "Common Mixed/Prepared Items": 39,
+    "Proteins": 56,
+    "Grains & Carbs": 39
+  }
+}

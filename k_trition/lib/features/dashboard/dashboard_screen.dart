@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../data/nutrition_repository.dart';
@@ -5,11 +7,13 @@ import '../settings/settings_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
+    required this.repository,
     required this.onDarkModeChanged,
     required this.repositoryLoader,
     super.key,
   });
 
+  final NutritionRepository repository;
   final Future<void> Function(bool enabled) onDarkModeChanged;
   final Future<NutritionRepository> Function() repositoryLoader;
 
@@ -30,14 +34,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color get _panel => Theme.of(context).colorScheme.surfaceContainerLow;
 
   final _foodNameController = TextEditingController();
+  final _foodResultsController = ScrollController();
   final _servingController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _waterController = TextEditingController();
   final List<_FoodEntry> _foodEntries = [];
+  final List<_PendingFoodPortion> _pendingFoodItems = [];
   final List<_WaterEntry> _waterEntries = [];
+  final List<_FoodEntry> _historyFoodEntries = [];
+  final List<_WaterEntry> _historyWaterEntries = [];
+  final List<Food> _foodSuggestions = [];
 
   int _goalCalories = 2000;
   int _goalWater = 64;
+  double _totalCalories = 0;
+  double _totalProtein = 0;
+  double _totalCarbs = 0;
+  double _totalFat = 0;
+  double _waterAmount = 0;
+  int? _goalProtein;
+  int? _goalCarbs;
+  int? _goalFat;
+  Food? _selectedFood;
+  String? _foodCategory;
+  Timer? _foodSearchTimer;
+  int _refreshRequest = 0;
+  int _foodSearchRequest = 0;
+  String? _loadError;
+  String? _foodSearchError;
+  bool _isSearchingFoods = false;
+  bool _isSaving = false;
   DateTime _selectedDate = DateTime.now();
   String _selectedMeal = _mealTypes.first;
   int _selectedWaterChoice = 8;
@@ -45,51 +71,226 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool _showAllFood = false;
   _HistoryRange _historyRange = _HistoryRange.day;
 
-  List<_FoodEntry> get _dailyFoodEntries =>
-      _foodEntries
-          .where(
-            (entry) =>
-                entry.loggedAt.year == _selectedDate.year &&
-                entry.loggedAt.month == _selectedDate.month &&
-                entry.loggedAt.day == _selectedDate.day,
-          )
-          .toList()
-        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+  List<_FoodEntry> get _selectedFoodEntries => _historyFoodEntries;
 
-  List<_WaterEntry> get _dailyWaterEntries =>
-      _waterEntries
-          .where(
-            (entry) =>
-                entry.loggedAt.year == _selectedDate.year &&
-                entry.loggedAt.month == _selectedDate.month &&
-                entry.loggedAt.day == _selectedDate.day,
-          )
-          .toList()
-        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+  List<_WaterEntry> get _selectedWaterEntries => _historyWaterEntries;
 
-  List<_FoodEntry> get _selectedFoodEntries =>
-      _foodEntries.where((entry) => _isInSelectedRange(entry.loggedAt)).toList()
-        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+  double? get _currentServingGrams {
+    final grams = double.tryParse(_servingController.text.trim());
+    if (grams == null || !grams.isFinite || grams <= 0 || grams >= 1000000000) {
+      return null;
+    }
+    return grams;
+  }
 
-  List<_WaterEntry> get _selectedWaterEntries =>
-      _waterEntries
-          .where((entry) => _isInSelectedRange(entry.loggedAt))
-          .toList()
-        ..sort((a, b) => b.loggedAt.compareTo(a.loggedAt));
+  NutritionTotals? get _currentNutrition {
+    final food = _selectedFood;
+    final grams = _currentServingGrams;
+    return food == null || grams == null
+        ? null
+        : widget.repository.calculate(food, grams);
+  }
 
-  int get _totalCalories =>
-      _dailyFoodEntries.fold(0, (total, entry) => total + entry.calories);
-
-  int get _waterAmount =>
-      _dailyWaterEntries.fold(0, (total, entry) => total + entry.amountOz);
+  @override
+  void initState() {
+    super.initState();
+    _refreshData();
+  }
 
   @override
   void dispose() {
     _foodNameController.dispose();
+    _foodResultsController.dispose();
     _servingController.dispose();
     _caloriesController.dispose();
     _waterController.dispose();
+    _foodSearchTimer?.cancel();
     super.dispose();
+  }
+
+  Future<List<_FoodEntry>> _foodsForDay(DateTime day) async {
+    final entries = <_FoodEntry>[];
+    for (final meal in await widget.repository.mealsForDay(day)) {
+      final loggedAt = DateTime.fromMillisecondsSinceEpoch(meal.loggedAt);
+      for (final item in await widget.repository.getMealItems(meal.id)) {
+        entries.add(
+          _FoodEntry(
+            id: meal.id,
+            meal: meal.mealType,
+            name: item.foodName,
+            servingGrams: item.grams,
+            calories: item.grams * item.kcalPerG,
+            protein: item.grams * item.proteinPerG,
+            carbs: item.grams * item.carbsPerG,
+            fat: item.grams * item.fatPerG,
+            loggedAt: loggedAt,
+          ),
+        );
+      }
+    }
+    return entries;
+  }
+
+  Future<List<_WaterEntry>> _waterForDay(DateTime day) async =>
+      (await widget.repository.waterForDay(day))
+          .map(
+            (entry) => _WaterEntry(
+              id: entry.id,
+              amountOz: entry.ounces,
+              loggedAt: DateTime.fromMillisecondsSinceEpoch(entry.loggedAt),
+            ),
+          )
+          .toList();
+
+  Future<void> _refreshData() async {
+    final request = ++_refreshRequest;
+    try {
+      final progress = await widget.repository.progressForDay(_selectedDate);
+      final foods = await _foodsForDay(_selectedDate);
+      final waters = await _waterForDay(_selectedDate);
+      final rangeStart = _historyRangeStart;
+      final rangeEnd = _historyRangeEnd;
+      final historyFoods = <_FoodEntry>[];
+      final historyWaters = <_WaterEntry>[];
+      for (var day = rangeStart; day.isBefore(rangeEnd); day = nextDay(day)) {
+        historyFoods.addAll(await _foodsForDay(day));
+        historyWaters.addAll(await _waterForDay(day));
+      }
+      if (!mounted || request != _refreshRequest) return;
+      setState(() {
+        _foodEntries
+          ..clear()
+          ..addAll(foods);
+        _waterEntries
+          ..clear()
+          ..addAll(waters);
+        _historyFoodEntries
+          ..clear()
+          ..addAll(historyFoods);
+        _historyWaterEntries
+          ..clear()
+          ..addAll(historyWaters);
+        _totalCalories = progress.nutrition.calories;
+        _totalProtein = progress.nutrition.protein;
+        _totalCarbs = progress.nutrition.carbs;
+        _totalFat = progress.nutrition.fat;
+        _waterAmount = progress.waterOunces;
+        _goalCalories = (progress.calorieGoal ?? 2000).round();
+        _goalWater = (progress.waterGoalOunces ?? 64).round();
+        _goalProtein = progress.proteinGoalGrams?.round();
+        _goalCarbs = progress.carbsGoalGrams?.round();
+        _goalFat = progress.fatGoalGrams?.round();
+        _loadError = null;
+      });
+    } catch (error) {
+      if (!mounted || request != _refreshRequest) return;
+      setState(() => _loadError = 'Could not load dashboard data: $error');
+    }
+  }
+
+  DateTime get _historyRangeStart => switch (_historyRange) {
+    _HistoryRange.day => DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    ),
+    _HistoryRange.week => _weekStart(_selectedDate),
+    _HistoryRange.month => DateTime(_selectedDate.year, _selectedDate.month),
+  };
+
+  DateTime get _historyRangeEnd => switch (_historyRange) {
+    _HistoryRange.day => _historyRangeStart.add(const Duration(days: 1)),
+    _HistoryRange.week => _historyRangeStart.add(const Duration(days: 7)),
+    _HistoryRange.month => DateTime(
+      _selectedDate.year,
+      _selectedDate.month + 1,
+    ),
+  };
+
+  Widget _buildLoadError() => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(_loadError!, textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          OutlinedButton(onPressed: _refreshData, child: const Text('Retry')),
+        ],
+      ),
+    ),
+  );
+
+  void _onFoodSearchChanged(String query) {
+    _foodSearchTimer?.cancel();
+    // Ignore results from an older query if the user keeps typing.
+    final request = ++_foodSearchRequest;
+    if (_selectedFood != null && query.trim() != _selectedFood!.name) {
+      _selectedFood = null;
+      _caloriesController.clear();
+    }
+    final trimmed = query.trim();
+    if (trimmed.length < 2 && _foodCategory == null) {
+      setState(() {
+        _foodSuggestions.clear();
+        _isSearchingFoods = false;
+        _foodSearchError = null;
+      });
+      return;
+    }
+    setState(() {
+      _foodSuggestions.clear();
+      _isSearchingFoods = true;
+      _foodSearchError = null;
+    });
+    _foodSearchTimer = Timer(const Duration(milliseconds: 250), () async {
+      try {
+        // Repository pages are capped at 100; collect all matching choices.
+        // The bounded ListView below only builds rows as they become visible.
+        final foods = <Food>[];
+        while (true) {
+          final page = await widget.repository.searchFoods(
+            query: trimmed,
+            category: _foodCategory,
+            limit: 100,
+            offset: foods.length,
+          );
+          if (!mounted || request != _foodSearchRequest) return;
+          foods.addAll(page);
+          if (page.length < 100) break;
+        }
+        if (!mounted || request != _foodSearchRequest) return;
+        setState(() {
+          _foodSuggestions
+            ..clear()
+            ..addAll(foods);
+          _isSearchingFoods = false;
+        });
+      } catch (error) {
+        if (!mounted || request != _foodSearchRequest) return;
+        setState(() {
+          _isSearchingFoods = false;
+          _foodSearchError = 'Food search failed: $error';
+        });
+      }
+    });
+  }
+
+  void _selectFood(Food food) {
+    setState(() {
+      _selectedFood = food;
+      _foodNameController.text = food.name;
+      _foodSuggestions.clear();
+      _foodSearchError = null;
+      _isSearchingFoods = false;
+      _servingController.text = food.fdcId == wheyShakeFoodId ? '270' : '100';
+      _updateCalculatedCalories();
+    });
+  }
+
+  void _updateCalculatedCalories() {
+    final nutrition = _currentNutrition;
+    _caloriesController.text = nutrition?.calories.round().toString() ?? '';
   }
 
   @override
@@ -103,7 +304,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               _buildHeader(),
               Expanded(
-                child: _selectedTab == 0
+                child: _loadError != null
+                    ? _buildLoadError()
+                    : _selectedTab == 0
                     ? _buildHomeContent()
                     : _buildHistoryContent(),
               ),
@@ -204,6 +407,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _selectedDate.day == now.day;
   }
 
+  bool get _isFutureDate {
+    final now = DateTime.now();
+    return DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    ).isAfter(DateTime(now.year, now.month, now.day));
+  }
+
   Widget _buildHomeContent() => ListView(
     padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
     children: [
@@ -232,6 +444,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               progress: _waterAmount / _goalWater,
             ),
           ),
+        ],
+      ),
+      const SizedBox(height: 8),
+      Row(
+        children: [
+          _macroGoalProgress('Protein', _totalProtein, _goalProtein),
+          _macroGoalProgress('Carbs', _totalCarbs, _goalCarbs),
+          _macroGoalProgress('Fat', _totalFat, _goalFat),
         ],
       ),
       const SizedBox(height: 10),
@@ -279,6 +499,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final formKey = GlobalKey<FormState>();
     var caloriesGoal = _goalCalories;
     var waterGoal = _goalWater;
+    int? proteinGoal = _goalProtein;
+    int? carbsGoal = _goalCarbs;
+    int? fatGoal = _goalFat;
 
     String? validateGoal(String? value, String label) {
       final goal = int.tryParse(value?.trim() ?? '');
@@ -288,74 +511,206 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return null;
     }
 
-    final goals = await showDialog<(int, int)>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Edit daily goals'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                initialValue: _goalCalories.toString(),
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Calories (Cal)'),
-                validator: (value) => validateGoal(value, 'Calorie goal'),
-                onSaved: (value) => caloriesGoal = int.parse(value!.trim()),
+    String? validateMacroGoal(String? value, String label) {
+      if (value == null || value.trim().isEmpty) return null;
+      final goal = int.tryParse(value.trim());
+      if (goal == null || goal <= 0) {
+        return '$label must be a whole number greater than zero, or left blank.';
+      }
+      return null;
+    }
+
+    int? parseMacroGoal(String? value) {
+      final trimmed = value?.trim() ?? '';
+      return trimmed.isEmpty ? null : int.parse(trimmed);
+    }
+
+    final goals =
+        await showDialog<
+          ({int calories, int water, int? protein, int? carbs, int? fat})
+        >(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Edit daily goals'),
+            scrollable: true,
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    initialValue: _goalCalories.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Calories (Cal)',
+                    ),
+                    validator: (value) => validateGoal(value, 'Calorie goal'),
+                    onSaved: (value) => caloriesGoal = int.parse(value!.trim()),
+                  ),
+                  TextFormField(
+                    initialValue: _goalWater.toString(),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Water (Oz)'),
+                    validator: (value) => validateGoal(value, 'Water goal'),
+                    onSaved: (value) => waterGoal = int.parse(value!.trim()),
+                  ),
+                  TextFormField(
+                    initialValue: _goalProtein?.toString() ?? '',
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Protein (g)',
+                      hintText: 'Optional',
+                    ),
+                    validator: (value) =>
+                        validateMacroGoal(value, 'Protein goal'),
+                    onSaved: (value) => proteinGoal = parseMacroGoal(value),
+                  ),
+                  TextFormField(
+                    initialValue: _goalCarbs?.toString() ?? '',
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Carbs (g)',
+                      hintText: 'Optional',
+                    ),
+                    validator: (value) =>
+                        validateMacroGoal(value, 'Carbohydrate goal'),
+                    onSaved: (value) => carbsGoal = parseMacroGoal(value),
+                  ),
+                  TextFormField(
+                    initialValue: _goalFat?.toString() ?? '',
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Fat (g)',
+                      hintText: 'Optional',
+                    ),
+                    validator: (value) => validateMacroGoal(value, 'Fat goal'),
+                    onSaved: (value) => fatGoal = parseMacroGoal(value),
+                  ),
+                ],
               ),
-              TextFormField(
-                initialValue: _goalWater.toString(),
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Water (Oz)'),
-                validator: (value) => validateGoal(value, 'Water goal'),
-                onSaved: (value) => waterGoal = int.parse(value!.trim()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    formKey.currentState!.save();
+                    Navigator.of(dialogContext).pop((
+                      calories: caloriesGoal,
+                      water: waterGoal,
+                      protein: proteinGoal,
+                      carbs: carbsGoal,
+                      fat: fatGoal,
+                    ));
+                  }
+                },
+                child: const Text('Save'),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+        );
+
+    if (goals == null || !mounted) return;
+    try {
+      await widget.repository.setGoals(
+        calories: goals.calories.toDouble(),
+        waterOunces: goals.water.toDouble(),
+        proteinGrams: goals.protein?.toDouble(),
+        carbsGrams: goals.carbs?.toDouble(),
+        fatGrams: goals.fat?.toDouble(),
+        effectiveDate: _selectedDate,
+      );
+      await _refreshData();
+    } catch (error) {
+      if (mounted) _showMessage('Could not save goals: $error');
+    }
+  }
+
+  Widget _macroGoalProgress(
+    String label,
+    double current,
+    int? goal,
+  ) => Expanded(
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: _muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                formKey.currentState!.save();
-                Navigator.of(dialogContext).pop((caloriesGoal, waterGoal));
-              }
-            },
-            child: const Text('Save'),
+          const SizedBox(height: 2),
+          Text(
+            '${_formatNumber(current)} / ${goal == null ? '—' : _formatNumber(goal)} g',
+            maxLines: 1,
+            style: TextStyle(color: _ink, fontSize: 10),
           ),
         ],
       ),
-    );
-
-    if (goals == null || !mounted) return;
-    setState(() {
-      _goalCalories = goals.$1;
-      _goalWater = goals.$2;
-    });
-  }
+    ),
+  );
 
   Widget _sectionLabel(String label) => Text(
     label,
-    style: TextStyle(
-      color: _ink,
-      fontSize: 14,
-      fontWeight: FontWeight.w700,
-    ),
+    style: TextStyle(color: _ink, fontSize: 14, fontWeight: FontWeight.w700),
   );
 
   Widget _buildFoodForm() => _SectionPanel(
     child: Column(
       children: [
+        DropdownButtonFormField<String>(
+          initialValue: 'All foods',
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Food category',
+            isDense: true,
+          ),
+          items:
+              const [
+                    'All foods',
+                    'Proteins',
+                    'Produce',
+                    'Grains & Carbs',
+                    'Dairy & Fats',
+                    'Common Mixed/Prepared Items',
+                  ]
+                  .map(
+                    (label) => DropdownMenuItem(
+                      value: label,
+                      child: Text(label, style: const TextStyle(fontSize: 11)),
+                    ),
+                  )
+                  .toList(),
+          onChanged: (value) {
+            setState(() => _foodCategory = value == 'All foods' ? null : value);
+            _onFoodSearchChanged(_foodNameController.text);
+          },
+        ),
+        const SizedBox(height: 8),
+        if (_pendingFoodItems.isNotEmpty) ...[
+          for (var index = 0; index < _pendingFoodItems.length; index++)
+            _buildPendingFoodItem(index),
+          const SizedBox(height: 8),
+        ],
         _inputField(
           controller: _foodNameController,
-          hint: 'Food name',
+          hint: 'Type a food name',
           textCapitalization: TextCapitalization.words,
+          onChanged: _onFoodSearchChanged,
         ),
+        if (_isSearchingFoods ||
+            _foodSearchError != null ||
+            _foodSuggestions.isNotEmpty ||
+            (_foodNameController.text.trim().length >= 2 &&
+                _selectedFood == null))
+          _buildFoodSuggestions(),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -364,18 +719,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 controller: _servingController,
                 hint: 'Serving size (g)',
                 keyboardType: TextInputType.number,
+                onChanged: (_) => setState(_updateCalculatedCalories),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
               child: _inputField(
                 controller: _caloriesController,
-                hint: 'Calories (optional)',
+                hint: 'Calories (auto)',
                 keyboardType: TextInputType.number,
+                readOnly: true,
               ),
             ),
           ],
         ),
+        if (_currentNutrition case final nutrition?) ...[
+          const SizedBox(height: 7),
+          _buildNutritionSummary(nutrition, includeCalories: false),
+        ],
+        if (_selectedFood != null) ...[
+          const SizedBox(height: 7),
+          SizedBox(
+            width: double.infinity,
+            height: 34,
+            child: OutlinedButton.icon(
+              onPressed: _isSaving ? null : _addAnotherFood,
+              icon: const Icon(Icons.add, size: 15),
+              label: const Text(
+                'Add another item',
+                style: TextStyle(fontSize: 11),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _orange,
+                side: const BorderSide(color: _orange),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(9),
+                ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 7),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -413,7 +796,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           width: double.infinity,
           height: 36,
           child: FilledButton(
-            onPressed: _addFood,
+            onPressed: _isSaving ? null : _addFood,
             style: FilledButton.styleFrom(
               backgroundColor: _orange,
               foregroundColor: Colors.white,
@@ -421,12 +804,198 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 borderRadius: BorderRadius.circular(9),
               ),
             ),
-            child: const Text('Add Food', style: TextStyle(fontSize: 12)),
+            child: Text(
+              _pendingFoodItems.isEmpty ? 'Add Food' : 'Save Meal',
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
         ),
       ],
     ),
   );
+
+  Widget _buildPendingFoodItem(int index) {
+    final item = _pendingFoodItems[index];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: _border),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${item.food.name} · ${_formatAmount(item.grams)} g',
+                  style: TextStyle(
+                    color: _ink,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Remove ${item.food.name}',
+                onPressed: _isSaving
+                    ? null
+                    : () => setState(() => _pendingFoodItems.removeAt(index)),
+                icon: const Icon(Icons.close, size: 16),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(
+                  width: 28,
+                  height: 28,
+                ),
+              ),
+            ],
+          ),
+          _buildNutritionSummary(
+            item.nutrition,
+            title: 'Macros',
+            includeCalories: true,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionSummary(
+    NutritionTotals nutrition, {
+    String title = 'Macros for this serving',
+    bool includeCalories = false,
+  }) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: _border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: TextStyle(color: _muted, fontSize: 9)),
+        const SizedBox(height: 5),
+        Row(
+          children: [
+            if (includeCalories)
+              _macroValue('Energy', nutrition.calories, 'Cal'),
+            _macroValue('Protein', nutrition.protein, 'g'),
+            _macroValue('Carbs', nutrition.carbs, 'g'),
+            _macroValue('Fat', nutrition.fat, 'g'),
+          ],
+        ),
+      ],
+    ),
+  );
+
+  Widget _macroValue(String label, double value, String unit) => Expanded(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: _muted, fontSize: 9)),
+        Text(
+          '${_formatNumber(value)} $unit',
+          style: TextStyle(
+            color: _ink,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
+  );
+
+  // Keep user-facing names short while showing the nutrition preparation.
+  String _foodBaseline(Food food) {
+    final source = food.sourceName.toLowerCase();
+    for (final state in [
+      'roasted',
+      'grilled',
+      'baked',
+      'hard-boiled',
+      'braised',
+      'boiled',
+      'cooked',
+      'raw',
+      'canned',
+      'dried',
+    ]) {
+      if (RegExp('\\b$state\\b').hasMatch(source)) return state;
+    }
+    if (food.fdcId == wheyShakeFoodId) return '30 g powder + 240 g water';
+    return 'standard serving';
+  }
+
+  Widget _buildFoodSuggestions() {
+    final message =
+        _foodSearchError ??
+        (_isSearchingFoods
+            ? 'Searching foods...'
+            : _foodSuggestions.isEmpty
+            ? 'No matching foods found.'
+            : null);
+    if (message != null) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(5, 6, 5, 2),
+          child: Text(message, style: TextStyle(color: _muted, fontSize: 10)),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Material(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: _border),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 240),
+          child: Scrollbar(
+            controller: _foodResultsController,
+            child: ListView.separated(
+              controller: _foodResultsController,
+              key: ValueKey(_foodNameController.text.trim()),
+              primary: false,
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+              itemCount: _foodSuggestions.length,
+              separatorBuilder: (_, _) =>
+                  const Divider(height: 1, indent: 8, endIndent: 8),
+              itemBuilder: (context, index) {
+                final food = _foodSuggestions[index];
+                return ListTile(
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                  title: Text(
+                    food.name,
+                    style: TextStyle(fontSize: 11, color: _ink),
+                  ),
+                  subtitle: Text(
+                    '${food.category} · '
+                    '${(food.kcalPerG * 100).round()} Cal / 100 g\n'
+                    'Baseline: ${_foodBaseline(food)}',
+                    style: TextStyle(fontSize: 9, color: _muted),
+                  ),
+                  onTap: () => _selectFood(food),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildWaterForm() => _SectionPanel(
     child: Column(
@@ -503,11 +1072,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     TextInputType? keyboardType,
     TextCapitalization textCapitalization = TextCapitalization.none,
     ValueChanged<String>? onChanged,
+    bool readOnly = false,
   }) => TextField(
     controller: controller,
     keyboardType: keyboardType,
     textCapitalization: textCapitalization,
     onChanged: onChanged,
+    readOnly: readOnly,
     style: TextStyle(color: _ink, fontSize: 11),
     decoration: InputDecoration(
       hintText: hint,
@@ -532,10 +1103,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   );
 
   Widget _buildFoodList({int? limit}) {
-    final selectedEntries = _dailyFoodEntries;
     final entries = limit == null
-        ? selectedEntries
-        : selectedEntries.take(limit).toList();
+        ? _foodEntries
+        : _foodEntries.take(limit).toList();
     if (entries.isEmpty) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: 14),
@@ -582,10 +1152,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                entry.servingGrams == null
-                    ? entry.name
-                    : '${entry.name} - ${_formatGrams(entry.servingGrams!)} g',
+                '${entry.name} - ${_formatGrams(entry.servingGrams)} g',
                 style: TextStyle(color: _ink, fontSize: 10),
+              ),
+              Text(
+                'Protein ${_formatGrams(entry.protein)} g · '
+                'Carbs ${_formatGrams(entry.carbs)} g · '
+                'Fat ${_formatGrams(entry.fat)} g',
+                style: TextStyle(color: _muted, fontSize: 9),
               ),
               if (showTime)
                 Text(
@@ -605,7 +1179,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           padding: EdgeInsets.zero,
           onSelected: (action) {
             if (action == 'delete') {
-              setState(() => _foodEntries.remove(entry));
+              _deleteFood(entry);
             }
           },
           itemBuilder: (context) => const [
@@ -673,7 +1247,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Expanded(
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
-            onTap: () => setState(() => _selectedDate = date),
+            onTap: () {
+              setState(() => _selectedDate = date);
+              _refreshData();
+            },
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Column(
@@ -736,7 +1313,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return Expanded(
                 child: InkWell(
                   borderRadius: BorderRadius.circular(18),
-                  onTap: () => setState(() => _selectedDate = date),
+                  onTap: () {
+                    setState(() => _selectedDate = date);
+                    _refreshData();
+                  },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: CircleAvatar(
@@ -820,7 +1400,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const Icon(Icons.water_drop_outlined, color: _orange, size: 18),
         const SizedBox(width: 9),
         Text(
-          '${entry.amountOz} Oz',
+          '${_formatAmount(entry.amountOz)} Oz',
           style: TextStyle(color: _ink, fontSize: 10),
         ),
         const Spacer(),
@@ -834,7 +1414,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           padding: EdgeInsets.zero,
           onSelected: (action) {
             if (action == 'delete') {
-              setState(() => _waterEntries.remove(entry));
+              _deleteWater(entry);
             }
           },
           itemBuilder: (context) => const [
@@ -856,24 +1436,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String get _calendarTitle => switch (_historyRange) {
     _ => _formatMonthYear(_selectedDate),
   };
-
-  bool _isInSelectedRange(DateTime date) {
-    final start = switch (_historyRange) {
-      _HistoryRange.day => DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-      ),
-      _HistoryRange.week => _weekStart(_selectedDate),
-      _HistoryRange.month => DateTime(_selectedDate.year, _selectedDate.month),
-    };
-    final end = switch (_historyRange) {
-      _HistoryRange.day => start.add(const Duration(days: 1)),
-      _HistoryRange.week => start.add(const Duration(days: 7)),
-      _HistoryRange.month => DateTime(start.year, start.month + 1),
-    };
-    return !date.isBefore(start) && date.isBefore(end);
-  }
 
   void _navigateHistory(int direction) {
     setState(() {
@@ -920,6 +1482,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           showSelectedIcon: false,
           onSelectionChanged: (selection) {
             setState(() => _historyRange = selection.first);
+            _refreshData();
           },
           style: ButtonStyle(
             textStyle: const WidgetStatePropertyAll(
@@ -1011,6 +1574,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     if (picked != null) {
       setState(() => _selectedDate = picked);
+      _refreshData();
     }
   }
 
@@ -1018,6 +1582,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _selectedDate = _selectedDate.add(Duration(days: days));
     });
+    _refreshData();
   }
 
   static DateTime _weekStart(DateTime date) => DateTime(
@@ -1031,11 +1596,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       first.month == second.month &&
       first.day == second.day;
 
-  static int _sumCalories(List<_FoodEntry> entries) =>
-      entries.fold(0, (total, entry) => total + entry.calories);
+  static double _sumCalories(List<_FoodEntry> entries) =>
+      entries.fold(0.0, (total, entry) => total + entry.calories);
 
-  static int _sumWater(List<_WaterEntry> entries) =>
-      entries.fold(0, (total, entry) => total + entry.amountOz);
+  static double _sumWater(List<_WaterEntry> entries) =>
+      entries.fold(0.0, (total, entry) => total + entry.amountOz);
 
   static String _formatTime(DateTime dateTime) {
     final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
@@ -1045,26 +1610,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   static String _formatGrams(double grams) =>
-      grams == grams.roundToDouble() ? grams.toInt().toString() : '$grams';
+      grams.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
 
-  void _addFood() {
+  static String _formatAmount(double amount) =>
+      amount == amount.roundToDouble() ? amount.round().toString() : '$amount';
+
+  bool _validateCurrentFood() {
     final name = _foodNameController.text.trim();
-    final caloriesText = _caloriesController.text.trim();
-    final calories = caloriesText.isEmpty ? 0 : int.tryParse(caloriesText);
-    final servingText = _servingController.text.trim();
-    final servingGrams = servingText.isEmpty
-        ? null
-        : double.tryParse(servingText);
-    if (name.isEmpty) {
-      _showMessage('Enter a food name to add it.');
-      return;
+    final food = _selectedFood;
+    if (food == null || name != food.name) {
+      _showMessage('Choose a food from the database suggestions.');
+      return false;
     }
-    if (calories == null || calories < 0) {
-      _showMessage('Enter a valid non-negative calorie amount.');
-      return;
-    }
-    if (servingText.isNotEmpty && (servingGrams == null || servingGrams <= 0)) {
+    if (_currentServingGrams == null) {
       _showMessage('Enter a valid serving size in grams.');
+      return false;
+    }
+    return true;
+  }
+
+  bool _validateMealDate() {
+    if (!_isFutureDate) return true;
+    _showMessage('please selected a valid date');
+    return false;
+  }
+
+  void _addAnotherFood() {
+    if (!_validateMealDate()) return;
+    if (!_validateCurrentFood()) return;
+    if (_pendingFoodItems.length >= 49) {
+      _showMessage('A meal can contain at most 50 food items.');
+      return;
+    }
+    final food = _selectedFood!;
+    final grams = _currentServingGrams!;
+    setState(() {
+      _pendingFoodItems.add(
+        _PendingFoodPortion(
+          food: food,
+          grams: grams,
+          nutrition: widget.repository.calculate(food, grams),
+        ),
+      );
+      _foodNameController.clear();
+      _servingController.clear();
+      _caloriesController.clear();
+      _selectedFood = null;
+      _foodSuggestions.clear();
+      _foodSearchError = null;
+      _isSearchingFoods = false;
+    });
+  }
+
+  Future<void> _addFood() async {
+    if (!_validateMealDate()) return;
+    final hasCurrentFood =
+        _selectedFood != null || _foodNameController.text.trim().isNotEmpty;
+    if (hasCurrentFood && !_validateCurrentFood()) return;
+    if (_pendingFoodItems.isEmpty && !hasCurrentFood) {
+      _showMessage('Choose a food from the database suggestions.');
+      return;
+    }
+
+    final portions = [
+      for (final item in _pendingFoodItems)
+        MealPortion(foodId: item.food.fdcId, grams: item.grams),
+      if (_selectedFood != null)
+        MealPortion(foodId: _selectedFood!.fdcId, grams: _currentServingGrams!),
+    ];
+    if (portions.length > 50) {
+      _showMessage('A meal can contain at most 50 food items.');
       return;
     }
 
@@ -1076,31 +1691,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
       now.hour,
       now.minute,
     );
-    setState(() {
-      _foodEntries.insert(
-        0,
-        _FoodEntry(
-          meal: _selectedMeal,
-          name: name,
-          servingGrams: servingGrams,
-          calories: calories,
-          loggedAt: loggedAt,
-        ),
+    setState(() => _isSaving = true);
+    try {
+      await widget.repository.saveMeal(
+        name: _pendingFoodItems.isEmpty
+            ? _selectedFood!.name
+            : _pendingFoodItems.first.food.name,
+        mealType: _selectedMeal,
+        loggedAt: loggedAt,
+        portions: portions,
       );
-      _foodNameController.clear();
-      _servingController.clear();
-      _caloriesController.clear();
-      _showAllFood = false;
-    });
-    FocusScope.of(context).unfocus();
+      if (!mounted) return;
+      setState(() {
+        _foodNameController.clear();
+        _servingController.clear();
+        _caloriesController.clear();
+        _selectedFood = null;
+        _pendingFoodItems.clear();
+        _foodSuggestions.clear();
+        _foodSearchError = null;
+        _isSearchingFoods = false;
+        _showAllFood = false;
+      });
+      FocusScope.of(context).unfocus();
+      await _refreshData();
+    } catch (error) {
+      if (mounted) _showMessage('Could not save food: $error');
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
-  void _addWater() {
+  Future<void> _addWater() async {
     final amountText = _waterController.text.trim();
     final amount = amountText.isEmpty
-        ? _selectedWaterChoice
-        : int.tryParse(amountText);
-    if (amount == null || amount <= 0) {
+        ? _selectedWaterChoice.toDouble()
+        : double.tryParse(amountText);
+    if (amount == null || !amount.isFinite || amount <= 0) {
       _showMessage('Enter a valid water amount greater than zero.');
       return;
     }
@@ -1113,15 +1740,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
       now.hour,
       now.minute,
     );
-    setState(() {
-      _waterEntries.insert(
-        0,
-        _WaterEntry(amountOz: amount, loggedAt: loggedAt),
-      );
-      _waterController.clear();
-      _selectedWaterChoice = 8;
-    });
-    FocusScope.of(context).unfocus();
+    try {
+      await widget.repository.saveWater(ounces: amount, loggedAt: loggedAt);
+      if (!mounted) return;
+      setState(() {
+        _waterController.clear();
+        _selectedWaterChoice = 8;
+      });
+      FocusScope.of(context).unfocus();
+      await _refreshData();
+    } catch (error) {
+      if (mounted) _showMessage('Could not save water: $error');
+    }
+  }
+
+  Future<void> _deleteFood(_FoodEntry entry) async {
+    try {
+      await widget.repository.deleteMeal(entry.id);
+      await _refreshData();
+    } catch (error) {
+      if (mounted) _showMessage('Could not delete food: $error');
+    }
+  }
+
+  Future<void> _deleteWater(_WaterEntry entry) async {
+    try {
+      await widget.repository.deleteWater(entry.id);
+      await _refreshData();
+    } catch (error) {
+      if (mounted) _showMessage('Could not delete water: $error');
+    }
   }
 
   void _showMessage(String message) {
@@ -1175,8 +1823,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return months[month - 1];
   }
 
-  static String _formatNumber(int value) {
-    final digits = value.toString();
+  static String _formatNumber(num value) {
+    final digits = value.round().toString();
     final result = StringBuffer();
     for (var i = 0; i < digits.length; i++) {
       if (i > 0 && (digits.length - i) % 3 == 0) {
@@ -1282,9 +1930,9 @@ class _ProgressCard extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress.clamp(0, 1),
             minHeight: 5,
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.surfaceContainerHighest,
+            backgroundColor: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -1311,24 +1959,49 @@ class _SectionPanel extends StatelessWidget {
 
 class _FoodEntry {
   const _FoodEntry({
+    required this.id,
     required this.meal,
     required this.name,
     required this.calories,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
     required this.loggedAt,
-    this.servingGrams,
+    required this.servingGrams,
   });
 
+  final int id;
   final String meal;
   final String name;
-  final int calories;
-  final double? servingGrams;
+  final double calories;
+  final double protein;
+  final double carbs;
+  final double fat;
+  final double servingGrams;
   final DateTime loggedAt;
 }
 
-class _WaterEntry {
-  const _WaterEntry({required this.amountOz, required this.loggedAt});
+class _PendingFoodPortion {
+  const _PendingFoodPortion({
+    required this.food,
+    required this.grams,
+    required this.nutrition,
+  });
 
-  final int amountOz;
+  final Food food;
+  final double grams;
+  final NutritionTotals nutrition;
+}
+
+class _WaterEntry {
+  const _WaterEntry({
+    required this.id,
+    required this.amountOz,
+    required this.loggedAt,
+  });
+
+  final int id;
+  final double amountOz;
   final DateTime loggedAt;
 }
 
